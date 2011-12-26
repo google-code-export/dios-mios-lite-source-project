@@ -1,0 +1,1 @@
+Download MIOSv10 with NUS Downloader, let it decrypt the contents and copy the 0000000c.app into this folder.

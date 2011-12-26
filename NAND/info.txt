@@ -1,0 +1,2 @@
+Compile DML and then copy the contents of this folder to your emulated NAND to install DML there.
+(except this file of course)
