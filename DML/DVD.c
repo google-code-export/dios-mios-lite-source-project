@@ -7,6 +7,13 @@ extern FIL GameFile;
 extern u32 DOLMaxOff;
 extern u32 DOLOffset;
 
+#ifdef CODES
+extern FIL KenobiGCFile;
+extern FIL CodesFile;
+extern u32 HandlerFlag;
+extern u32 CodesFlag;
+#endif
+
 void DVDReadConfig( void )
 {
 	char *str = (char*)malloca( 128, 32 );
@@ -44,6 +51,36 @@ s32 DVDSelectGame( void )
 			f_close( &BootInfo );
 
 			sprintf( str, "/games/%s/game.iso", Path );
+
+#ifdef CODES
+			char *strhandler = (char*)malloca( 0x100, 0x20 );
+			sprintf( strhandler, "/games/kenobigc.bin" );
+			s32 freshandler = f_open( &KenobiGCFile, strhandler, FA_READ );
+			if( freshandler != FR_OK )
+			{
+				dbgprintf("Failed to open:\"%s\" freshandler:%d\n", strhandler, freshandler );
+				HandlerFlag = HANDLER_ERR;
+			}
+			else
+			{	
+				HandlerFlag = HANDLER_OK;
+			}
+			free( strhandler );
+
+			char *strcodes = (char *)malloca( 0x100, 0x20);
+			sprintf( strcodes, "/games/%s/codes.gct", Path);
+			s32 frescodes = f_open( &CodesFile, strcodes, FA_READ);
+			if( frescodes != FR_OK )
+			{
+				dbgprintf("Failed to open:\"%s\" frescodes:%d\n", strcodes, frescodes );
+				CodesFlag = CODES_ERR;
+			}
+			else
+			{
+				CodesFlag = CODES_OK;
+			}
+			free( strcodes );			
+#endif
 
 			free( Path );
 		} break;

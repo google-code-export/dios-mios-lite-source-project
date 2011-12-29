@@ -8,6 +8,17 @@
 //#define CHEATHOOK 1
 //#define ACTIVITYLED 1
 
+//To compile with debugger and cheat codes feature, otherwise comment the line right below
+#define CODES 1
+#ifdef CODES
+#define 	HANDLER_OK   1
+#define	HANDLER_ERR  2
+#define     HANDLER_DONE 3
+#define	CODES_OK     1
+#define     CODES_ERR	 2
+#define     CODES_DONE   3
+#endif
+
 #define	DI_SUCCESS	1
 #define	DI_ERROR	2
 #define	DI_FATAL	64

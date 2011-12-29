@@ -428,6 +428,36 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	}
 
 //Note: ORing the values prevents an early break out when a single patterns has multiple hits
+
+#ifdef CODES
+		u32 DebuggerHook = 0x0;		
+		for( i=0; i < size; i+=4 )
+		{
+			//GC VI Hook
+			if( read32( (u32)ptr + i ) == 0x906402E4 && read32( (u32)ptr + i + 4 ) == 0x38000000 
+				&& read32( (u32)ptr + i + 8 ) == 0x900402E0 && read32( (u32)ptr + i + 12 ) == 0x909E0004 )
+			{
+				j = 0;
+				while( read32( (u32)ptr + i + j ) != 0x4E800020 )
+					j+=4;
+				DebuggerHook = (u32)ptr + i + j;
+				write32( 0x0D800070, 1 );
+				dbgprintf("Debugger:[Patches.c] DebuggerHook: %08X\n", DebuggerHook);
+				write32( 0x0D800070, 0 );
+			}
+		}
+
+		if( DebuggerHook > 0x0)		
+		{ 	
+			u32 newval = 0x18A8 - DebuggerHook;
+			newval &= 0x03FFFFFC;
+			newval |= 0x48000000;
+			write32( DebuggerHook, newval );
+			write32( 0x0D800070, 1 );
+			dbgprintf("Debugger:[Patches.c] Change GC VI hook blr at %08X: %08X\n",  DebuggerHook, newval);
+			write32( 0x0D800070, 0 );
+		}
+#endif
 	
 	//cache stuff
 	PatchCount=0;
@@ -504,7 +534,6 @@ SPatches:
 				break;
 			}
 		}
-
 
 		for( i=0; i < size; i+=4 )
 		{
@@ -780,4 +809,5 @@ SPatches:
 
 //Write PatchCache to file
 	f_close( &PCache );
+
 }

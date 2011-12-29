@@ -134,6 +134,10 @@ typedef struct
 	u32 DataSize;
 } PartitionInfo;
 
+#ifdef CODES
+void DIReadKenobiGC( void );
+void DIReadCodes( void );
+#endif
 void DIInit( void );
 void DIUpdateRegisters( void );
 

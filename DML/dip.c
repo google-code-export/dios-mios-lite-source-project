@@ -13,7 +13,6 @@ u32 DOLMaxOff		= 0;
 u32 DOLSize			= 0;
 u32 DOLOffset		= 0;
 
-
 FIL GameFile;
 u32 read;
 
@@ -21,6 +20,41 @@ u32 DiscRead=0;
 
 extern u32 fail;
 
+#ifdef CODES
+FIL KenobiGCFile;
+FIL CodesFile;
+u32 HandlerFlag;
+u32 CodesFlag;
+void DIReadKenobiGC( void )
+{
+	if( HandlerFlag == HANDLER_OK || HandlerFlag == HANDLER_DONE )
+	{
+		//u32 testhandler;
+		f_lseek( &KenobiGCFile, 0 );
+		f_read( &KenobiGCFile, (void*)0x1800, KenobiGCFile.fsize, &read );
+		memcpy((void *)0x1800, (void*)0x0, 6);
+		//f_close( &KenobiGCFile );
+		HandlerFlag = HANDLER_DONE;
+	}
+}
+void DIReadCodes( void )
+{
+	if( CodesFlag == CODES_OK || CodesFlag == CODES_DONE )
+	{
+		//u32 testcodes;
+		u32 maxcodesfile = 0x650;
+		f_lseek( &CodesFile, 0 );		
+		if( CodesFile.fsize >= maxcodesfile )
+		{
+			f_close( &CodesFile );
+			Shutdown();
+		}
+		f_read( &CodesFile, (void*)0x27B0, CodesFile.fsize, &read );
+		//f_close( &CodesFile );
+		CodesFlag = CODES_DONE;
+	}	
+}
+#endif
 void DIInit( void )
 {
 	memset32( (void*)DI_BASE, 0xdeadbeef, 0x30 );
@@ -157,7 +191,10 @@ void DIUpdateRegisters( void )
 						dbgprintf("DIP:FST NameOff:%p\n", FSTNames );
 
 						DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 1 );
-
+#ifdef CODES
+						DIReadKenobiGC();
+						DIReadCodes();
+#endif
 						switch( read32( 0 ) & 0xFF )
 						{
 							default:
@@ -223,6 +260,10 @@ void DIUpdateRegisters( void )
 						{
 							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 0 );
 							PatchState = 4;
+#ifdef CODES
+							DIReadKenobiGC();
+							DIReadCodes();
+#endif
 						}
 					}
 										
@@ -260,4 +301,5 @@ void DIUpdateRegisters( void )
 			;//dbgprintf("DIP:DI_CONTROL:%08X:%08X\n", read32(DI_CONTROL), read32(DI_CONTROL) );
 		}
 	}
+
 }
