@@ -168,6 +168,7 @@ void DIUpdateRegisters( void )
 					//	break;
 					//}
 					
+					// TODO change the MIOS binary or patch it, so it doesn't want to patch Wind Waker, and then remove this
 					//Zelda hack
 					if( (read32(0) >> 8 ) == 0x475A4C )
 					{

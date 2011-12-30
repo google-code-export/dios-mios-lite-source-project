@@ -187,7 +187,65 @@ int main( int argc, char *argv[] )
 		LowReadDiscID(0);
 		DVDEnableAudioStreaming( read32(8) >> 24 );
 		dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
+	}
+	
+/* Right now all these games should crash because the MIOS patcher uses the memory which DML uses for the ppc <-> arm communication
+	switch(read32(0) >> 8)
+	{
+		case 0x475A4C:
+			dbgprintf("Warning: MIOS Patch for Wind Waker(GZL) will be skipped\n");
+		break;
+		
+		case 0x475352:
+			dbgprintf("Warning: MIOS Patch for Smuggler's Run: Warzones(GSR) will be skipped\n");
+		break;
+		
+		case 0x505A4C:
+			dbgprintf("Warning: MIOS Patch for Zelda: Collector's Edition(PZL) will be skipped\n");
+		break;
+
+		default:
+		break;
+	}
+	
+	switch(read32(0))
+	{
+		case 0x47543350:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3P) will be skipped\n");
+		break;
+		
+		case 0x47543346:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3F) will be skipped\n");
+		break;
+
+		case 0x47543344:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3D) will be skipped\n");
+		break;
+		
+		case 0x474E4845:
+			dbgprintf("MIOS blacklist for Action Replace(GNHE) will be ignored\n");
+		break;
+		
+		case 0x4743364A:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6J) will be skipped\n");
+		break;
+		
+		case 0x47433645:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6E) will be skipped\n");
+		break;
+		
+		case 0x47433650:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6P) will be skipped\n");
+		break;
+		
+		case 0x47504F4A:
+			dbgprintf("Warning: MIOS Patch for Phantasy Star Online Episode I & II ? (GPOJ) will be skipped\n");
+		break;
+		
+		default:
+		break;
 	} 
+*/
 
 	DVDSelectGame();
 

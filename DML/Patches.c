@@ -350,7 +350,8 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 }
 void DoPatchesLoader( char *ptr, u32 size )
 {
-	u32 i=0,j=0,k=0,offset=0,read;
+	u32 i=0,j=0,k=0;
+	//u32 offset=0,read;
 
 	for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		LPatterns[j].Found = 0;	
@@ -399,9 +400,11 @@ void DoPatchesLoader( char *ptr, u32 size )
 void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 {
 	FIL PCache;
-	u32 i=0,j=0,k=0,offset=0,read;
-	u32 __DVDIHOffset	= 0;
-	u32 DVDLROffset		= 0;
+	u32 i=0,j=0,k=0,read;
+	//u32 offset=0;
+	
+	//u32 __DVDIHOffset	= 0;
+	//u32 DVDLROffset		= 0;
 	u32 PatchCount		= 0;
 	PatchCache PC;
 
@@ -500,7 +503,7 @@ SPatches:
 				) 
 			{
 				u32 Loader = 0;
-				u32 ValA,ValB;
+				//u32 ValA,ValB;
 
 				if( read32( (u32)ptr + i ) == 0x3C00A800 )
 					Loader = 1;
@@ -700,7 +703,7 @@ SPatches:
 				{
 					if( (read32( PC.Offset + j ) & 0xFC000003) == 0x48000001 )
 					{
-						dbgprintf("DIP:DCInvalidateRange @ %08X\n", PC.Offset + j | 0x80000000 );
+						dbgprintf("DIP:DCInvalidateRange @ %08X\n", (PC.Offset + j) | 0x80000000 );
 						memcpy( (void*)0x2E30, DVDReadAbsAsyncPrio, sizeof(DVDReadAbsAsyncPrio) );
 						PatchBL( 0x2E30, PC.Offset + j );
 
@@ -716,7 +719,7 @@ SPatches:
 				{
 					if( (read32( PC.Offset + j ) & 0xFF000003) == 0x41000000 )
 					{
-						dbgprintf("DIP:Branch @ %08X\n", PC.Offset + j | 0x80000000 );
+						dbgprintf("DIP:Branch @ %08X\n", (PC.Offset + j) | 0x80000000 );
 
 						if( count == 0 )
 						{

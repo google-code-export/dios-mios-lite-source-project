@@ -48,7 +48,9 @@ $(TARGET) : iosmodule.ld $(OBJECTS)
 	@echo	"DEP	$@"
 	@touch $@
 
+ifneq ($(MAKECMDGOALS),clean)
 -include $(OBJECTS:.o=.d)
+endif
 
 clean:
 	-rm -f *.elf *.o *.bin *.d *.map ../NAND/title/00000001/00000100/content/00000008.app

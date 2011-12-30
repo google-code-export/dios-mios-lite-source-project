@@ -144,7 +144,7 @@ s32 CardFastOpenFile( u32 FileNo, CARDFileInfo *CFInfo )
 {
 	CARDStat CStat;
 	FIL savefile;
-	s32 Slot,fres;
+	s32 fres;
 	u32 read;
 
 	if( FileNo >= CARD_MAX_FILES )
