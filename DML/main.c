@@ -99,6 +99,119 @@ void DebugPoke( u8 Value )
 u32 fail;
 FIL Log;
 
+
+void check_MIOS_patches()
+{
+	bool remove_MIOS_patches = false;
+	switch(read32(0) >> 8)
+	{
+		case 0x475A4C:
+			dbgprintf("Warning: MIOS Patch for Wind Waker(GZL) will be skipped\n");
+			dbgprintf("The game will freeze when opening the mini map in dungeons\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x475352:
+			dbgprintf("Warning: MIOS Patch for Smuggler's Run: Warzones(GSR) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x505A4C:
+			dbgprintf("Warning: MIOS Patch for Zelda: Collector's Edition(PZL) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+
+		default:
+		break;
+	}
+	
+	switch(read32(0))
+	{
+		case 0x47543350:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3P) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x47543346:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3F) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+
+		case 0x47543344:
+			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3D) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x474E4845:
+			dbgprintf("MIOS blacklist for Action Replay(GNHE) will be ignored\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x4743364A:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6J) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x47433645:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6E) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x47433650:
+			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6P) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		case 0x47504F4A:
+			dbgprintf("Warning: MIOS Patch for Phantasy Star Online Episode I & II ? (GPOJ) will be skipped\n");
+			remove_MIOS_patches = true;
+		break;
+		
+		default:
+		break;
+	}
+	
+	if (remove_MIOS_patches)
+	{
+		const u32 old_table[18] = {
+			0x475A4C00, 0x47535200, 0x505A4C00, 0x47543350,
+			0x00000000, 0x47543346, 0x00000000, 0x47543344, 
+			0x00000000, 0x474E4845, 0x00000000, 0x4743364A, 
+			0x00000000, 0x47433645, 0x00000000, 0x47433650, 
+			0x00000000, 0x47504F4A
+		};
+
+		const u32 new_table[18] = {
+			0x585A4C00, 0x58535200, 0x585A4C00, 0x58543350,
+			0x00000000, 0x58543346, 0x00000000, 0x58543344, 
+			0x00000000, 0x584E4845, 0x00000000, 0x5843364A, 
+			0x00000000, 0x58433645, 0x00000000, 0x58433650, 
+			0x00000000, 0x58504F4A
+		};
+		
+		bool patched = false;
+		u32 i;
+		
+		for (i=0x01300000; i<0x01380000; i+=4)		// Estimate 512KB as max MIOS size 
+		{
+			if (!memcmp((void *)i, (void *)old_table, sizeof(old_table))) 
+			{
+				memcpy((void *)i, (void *)new_table, sizeof(new_table));
+				patched = true;
+				dbgprintf("MIOS IPL patched to not patch this game\n");
+				break;
+			}
+		}
+		if (!patched)
+		{
+			dbgprintf("MIOS IPL patch failed\n");
+		}
+	}
+}
+
+
+
+
 int main( int argc, char *argv[] )
 {
 	udelay(800);
@@ -133,18 +246,21 @@ int main( int argc, char *argv[] )
 
 #ifdef DEBUG
 	dbgprintf("$IOSVersion: DIOS-MIOS Lite INTERNAL: " __DATE__ " " __TIME__ " 64M DEBUG$\n");
-	dbgprintf("This is an INTERNAL version and may not be copied or re-distributed without prior written consent!\n");
+	//dbgprintf("This is an INTERNAL version and may not be copied or re-distributed without prior written consent!\n");
 #else
-	dbgprintf("DIOS-MIOS Lite PoC-Version by crediar\n");
+	//dbgprintf("DIOS-MIOS Lite PoC-Version by crediar\n");
+	//dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
+	//dbgprintf("It is not allowed to resell, rehost, redistribute or include this file in any packages!\n");
+	dbgprintf("DIOS-MIOS Lite\n");
 	dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
-	dbgprintf("It is not allowed to resell, rehost, redistribute or include this file in any packages!\n");
+	dbgprintf("This software is licensed under GPLv3, for more details visit: http://code.google.com/p/dios-mios-lite-source-project\n");
 #endif
 	
 	dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
 	
 	dbgprintf("MEMInitLow()...\n");
 	MEMInitLow();
-	
+
 	EHCIInit();
 	//dbgprintf("EHCIInit()\n");
 	
@@ -189,63 +305,7 @@ int main( int argc, char *argv[] )
 		dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
 	}
 	
-/* Right now all these games should crash because the MIOS patcher uses the memory which DML uses for the ppc <-> arm communication
-	switch(read32(0) >> 8)
-	{
-		case 0x475A4C:
-			dbgprintf("Warning: MIOS Patch for Wind Waker(GZL) will be skipped\n");
-		break;
-		
-		case 0x475352:
-			dbgprintf("Warning: MIOS Patch for Smuggler's Run: Warzones(GSR) will be skipped\n");
-		break;
-		
-		case 0x505A4C:
-			dbgprintf("Warning: MIOS Patch for Zelda: Collector's Edition(PZL) will be skipped\n");
-		break;
-
-		default:
-		break;
-	}
-	
-	switch(read32(0))
-	{
-		case 0x47543350:
-			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3P) will be skipped\n");
-		break;
-		
-		case 0x47543346:
-			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3F) will be skipped\n");
-		break;
-
-		case 0x47543344:
-			dbgprintf("Warning: MIOS Patch for Tony Hawk's Pro Skater 3(GT3D) will be skipped\n");
-		break;
-		
-		case 0x474E4845:
-			dbgprintf("MIOS blacklist for Action Replace(GNHE) will be ignored\n");
-		break;
-		
-		case 0x4743364A:
-			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6J) will be skipped\n");
-		break;
-		
-		case 0x47433645:
-			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6E) will be skipped\n");
-		break;
-		
-		case 0x47433650:
-			dbgprintf("Warning: MIOS Patch for Pokémon Colosseum(GC6P) will be skipped\n");
-		break;
-		
-		case 0x47504F4A:
-			dbgprintf("Warning: MIOS Patch for Phantasy Star Online Episode I & II ? (GPOJ) will be skipped\n");
-		break;
-		
-		default:
-		break;
-	} 
-*/
+	check_MIOS_patches();
 
 	DVDSelectGame();
 

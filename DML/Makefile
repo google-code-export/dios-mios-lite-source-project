@@ -24,6 +24,7 @@ $(TARGET) : iosmodule.ld $(OBJECTS)
 	@$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 	@$(SSTRIP) -s $@
 	@../FixELF/FixELF.exe ../MIOSv10/0000000c.app iosmodule.elf ../NAND/title/00000001/00000100/content/00000008.app
+	@echo DML was copied to NAND/title/00000001/00000100/content/00000008.app
 
 
 %.o : %.s

@@ -9,7 +9,7 @@
 //#define ACTIVITYLED 1
 
 //To compile with debugger and cheat codes feature, otherwise comment the line right below
-#define CODES 1
+//#define CODES 1
 #ifdef CODES
 #define 	HANDLER_OK   1
 #define	HANDLER_ERR  2

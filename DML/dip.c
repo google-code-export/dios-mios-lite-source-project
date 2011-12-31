@@ -168,12 +168,12 @@ void DIUpdateRegisters( void )
 					//	break;
 					//}
 					
-					// TODO change the MIOS binary or patch it, so it doesn't want to patch Wind Waker, and then remove this
+					/* The MIOS IPL is patched to not use its patcher on Wind Waker, so this shouldn't be required
 					//Zelda hack
 					if( (read32(0) >> 8 ) == 0x475A4C )
 					{
 						write32( 0, 0x475B4C00 | (read32(0) & 0xFF) );
-					}
+					}*/
 
 					//Hack for Metroid since it reads the FST before the main.dol
 					if( Offset == 0x28ebd340 )
