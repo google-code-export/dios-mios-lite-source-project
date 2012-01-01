@@ -3,13 +3,18 @@
 
 #define UINT_MAX ((unsigned int)0xffffffff)
 
-#define CARD_DEBUG 1
-
+//#define CARD_DEBUG 1
 //#define CHEATHOOK 1
 //#define ACTIVITYLED 1
 
 //To compile with debugger and cheat codes feature, otherwise comment the line right below
 //#define CODES 1
+
+#define debugprintf 1		// This will log dbgprintf via usb gecko, and if ???, it will log to  it will log to sd card
+//#define debugprintfSD 1	// This will log all dbgprintf to sd card
+
+#define fwrite_patch 1		
+
 #ifdef CODES
 #define 	HANDLER_OK   1
 #define	HANDLER_ERR  2

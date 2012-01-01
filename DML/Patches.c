@@ -51,9 +51,11 @@ FuncPattern LPatterns[] =
 	{ 0x280,        50,     22,     8,      18,     12, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 	{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 
+#ifndef fwrite_patch
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite A",				5,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite B",				5,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite C",				5,		0 },
+#endif
 };
 
 FuncPattern CPatterns[] =
@@ -405,7 +407,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	
 	//u32 __DVDIHOffset	= 0;
 	//u32 DVDLROffset		= 0;
-	u32 PatchCount		= 0;
 	PatchCache PC;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
@@ -463,7 +464,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 #endif
 	
 	//cache stuff
-	PatchCount=0;
 
 	if( f_open( &PCache, "dmcache.bin", FA_READ | FA_OPEN_EXISTING ) == FR_OK && UseCache )
 	{
@@ -493,17 +493,16 @@ SPatches:
 		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 
 		
-		PatchCount=0;
+		u32 PatchCount = 0;
 	
-		for( i=0; i < size; i+=4 )
+		// DVD read patch
+		for( i=0; (i < size && PatchCount == 0); i+=4 )
 		{
-			if( (PatchCount & 1) == 0 )
 			if( read32( (u32)ptr + i ) == 0x3C60A800 ||	// Games
 				read32( (u32)ptr + i ) == 0x3C00A800	// DolLoaders
 				) 
 			{
 				u32 Loader = 0;
-				//u32 ValA,ValB;
 
 				if( read32( (u32)ptr + i ) == 0x3C00A800 )
 					Loader = 1;
@@ -532,6 +531,7 @@ SPatches:
 				PC.PatchID = 0xdead0005;
 				
 				dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", PC.Offset + SectionOffset );
+				PatchCount = 1;
 
 				f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 				break;
@@ -801,6 +801,11 @@ SPatches:
 			default:
 			{
 #ifdef CHEATHOOK
+				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
+					break;
+#endif
+#ifndef fwrite_patch
+				// Removing patterns from FPatterns causes a big problem with the cache
 				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
 					break;
 #endif
