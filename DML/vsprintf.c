@@ -364,7 +364,10 @@ void GeckoSendBuffer( char *buffer )
 
 extern FIL Log;
 
+#if defined(debugprintf) || defined(debugprintfSD)
 static char buffer[128] ALIGNED(32);
+#endif
+
 int dbgprintf( const char *fmt, ...)
 {
 #if defined(debugprintf) || defined(debugprintfSD)

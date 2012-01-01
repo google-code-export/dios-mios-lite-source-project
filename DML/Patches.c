@@ -14,7 +14,6 @@ unsigned char OSReportDM[] =
 	0x4E, 0x80, 0x00, 0x20, 
 } ;
 
-
 FuncPattern FPatterns[] =
 {
 	//{ 0xBC,			20,     3,      3,      4,      7,	DVDReadAsync,			sizeof(DVDReadAsync),			"DVDReadAsync",					0,		0 },
@@ -133,51 +132,51 @@ void PatchGCIPL( void )
 //UNKReport
 	PatchB( 0x1304320, 0x13117AC );
 }
-bool FPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
+
+void create_Pattern(u8 *Data, u32 Length, FuncPattern *FP)
 {
 	u32 i;
-	FuncPattern FP;
 
-	memset( &FP, 0, sizeof(FP) );
+	memset( FP, 0, sizeof(FuncPattern) );
 
 	for( i = 0; i < Length; i+=4 )
 	{
 		u32 word =  read32( (u32)Data + i );
 		
 		if( (word & 0xFC000003) ==  0x48000001 )
-			FP.FCalls++;
+			FP->FCalls++;
 
 		if( (word & 0xFC000003) ==  0x48000000 )
-			FP.Branch++;
+			FP->Branch++;
 		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FP.Branch++;
+			FP->Branch++;
 		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FP.Branch++;
+			FP->Branch++;
 		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FP.Branch++;
+			FP->Branch++;
 		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FP.Branch++;
+			FP->Branch++;
 		
 		if( (word & 0xFC000000) ==  0x80000000 )
-			FP.Loads++;
+			FP->Loads++;
 		if( (word & 0xFF000000) ==  0x38000000 )
-			FP.Loads++;
+			FP->Loads++;
 		if( (word & 0xFF000000) ==  0x3C000000 )
-			FP.Loads++;
+			FP->Loads++;
 		
 		if( (word & 0xFC000000) ==  0x90000000 )
-			FP.Stores++;
+			FP->Stores++;
 		if( (word & 0xFC000000) ==  0x94000000 )
-			FP.Stores++;
+			FP->Stores++;
 
 		if( (word & 0xFF000000) ==  0x7C000000 )
-			FP.Moves++;
+			FP->Moves++;
 
 		if( word == 0x4E800020 )
 			break;
 	}
 
-	FP.Length = i;
+	FP->Length = i;
 
 	//if( (u32)Data == 0x336E08 )
 	//{
@@ -189,22 +188,29 @@ bool FPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 	//	dbgprintf("Moves : %d\n", FP.Moves );
 	//	dbgprintf("Res   : %d\n", memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) );	
 	//}
+}
 
-	if( memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) == 0 )
+bool compare_Pattern( FuncPattern *FP1, FuncPattern *FP2 )
+{
+	if( memcmp( FP1, FP2, sizeof(u32) * 6 ) == 0 )
 		return true;
 	else
 		return false;
 }
+
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i,j,k,offset,fail,FoundCardFuncStart=0;
+	FuncPattern temp_FP;
 
 	dbgprintf("DoCardPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
-		
+	
 	for( i=0; i < size; i+=4 )
 	{
 		if( read32( (u32)ptr + i ) != 0x7C0802A6 )	// MFLR
 			continue;
+		
+		create_Pattern((u8*)(ptr+i), size, &temp_FP);
 
 		for( j=0; j < sizeof(CPatterns)/sizeof(FuncPattern); ++j )
 		{
@@ -214,7 +220,7 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 			if( CPatterns[j].Found )				// Skip already found patches
 				continue;
 
-			if( FPattern( (u8*)(ptr+i), size, &(CPatterns[j]) ) )
+			if( compare_Pattern( &temp_FP, &(CPatterns[j]) ) )
 			{
 				if( CPatterns[j].Patch == CARDFreeBlocks )
 				{
@@ -354,6 +360,7 @@ void DoPatchesLoader( char *ptr, u32 size )
 {
 	u32 i=0,j=0,k=0;
 	//u32 offset=0,read;
+	FuncPattern temp_FP;
 
 	for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		LPatterns[j].Found = 0;	
@@ -367,12 +374,14 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 		i+=4;
 
+		create_Pattern((u8*)(ptr+i), size, &temp_FP);
+
 		for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		{
 			if( LPatterns[j].Found ) //Skip already found patches
 				continue;
 
-			if( FPattern( (u8*)(ptr+i), size, &(LPatterns[j]) ) )
+			if( compare_Pattern( &temp_FP, &(LPatterns[j]) ) )
 			{
 				dbgprintf("Patch:Found [%s]: 0x%08X\n", LPatterns[j].Name, ((u32)ptr + i) | 0x80000000 );
 
@@ -404,6 +413,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	FIL PCache;
 	u32 i=0,j=0,k=0,read;
 	//u32 offset=0;
+	FuncPattern temp_FP;
 	
 	//u32 __DVDIHOffset	= 0;
 	//u32 DVDLROffset		= 0;
@@ -476,7 +486,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	} else {
 
 SPatches:
-
 		//Don't use the same file, it will cause a fail next time the game boots
 		if( UseCache )
 			f_open( &PCache, "dmcache.bin", FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
@@ -491,7 +500,6 @@ SPatches:
 		//PC.PatchID = 0xdead0002;
 
 		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
-
 		
 		u32 PatchCount = 0;
 	
@@ -545,13 +553,14 @@ SPatches:
 
 			i+=4;
 
+			create_Pattern((u8*)(ptr+i), size, &temp_FP);
 
 			for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
 			{
 				if( FPatterns[j].Found ) //Skip already found patches
 					continue;
 				
-				if( FPattern( (u8*)(ptr+i), size, &(FPatterns[j]) ) )
+				if( compare_Pattern( &temp_FP, &(FPatterns[j]) ) )
 				{
 					dbgprintf("Patch:Found [%s]: 0x%08X\n", FPatterns[j].Name, (u32)ptr + i + SectionOffset );
 					
