@@ -69,11 +69,11 @@ void DIInit( void )
 void DIUpdateRegisters( void )
 {	
 	u32 read,i;
-	static u32 PatchState = 0;
+	static u32 PatchState = 2;
 	static u32 DOLReadSize= 0;
-	static FEntry *FSTable;
-	static u32 FSTEntries = 0;
-	static char *FSTNames;
+	//static FEntry *FSTable;
+	//static u32 FSTEntries = 0;
+	//static char *FSTNames;
 	
 	if( read32(DI_CONTROL) != 0xdeadbeef )
 	{
@@ -175,11 +175,14 @@ void DIUpdateRegisters( void )
 						write32( 0, 0x475B4C00 | (read32(0) & 0xFF) );
 					}*/
 
+					/* This should not be required anymore, because DML now detects when the main.dol is loaded
 					//Hack for Metroid since it reads the FST before the main.dol
 					if( Offset == 0x28ebd340 )
 						DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 1 );
+						*/
+						
 
-					//GC-IPL has loaded the main.dol to RAM, now we can patch it
+/*					//GC-IPL has loaded the main.dol to RAM, now we can patch it
 					if( Buffer > 0x01700000 && Length != 0x2000 && PatchState == 0 )
 					{
 						FSTable = (FEntry*)Buffer;
@@ -218,53 +221,81 @@ void DIUpdateRegisters( void )
 						PatchState = 1;
 
 					// Game is loading a new loader!
-					} else if ( Buffer == 0x01300000 && PatchState )
+					} else
+					*/
+					
+					if (PatchState == 1)
 					{
-						dbgprintf("DIP:Game loading new .dol!\n");
-						DoPatchesLoader( (char*)(Buffer), Length );
-						PatchState = 2;
-
-					//Get the main.dol header read so we know once the dol is completly loaded so we can patch it
-					} else if ( (Buffer >> 20 ) == 0x12 && Length == 256 && PatchState == 2 )
-					{
-						//quickly calc the size
-						DOLSize = sizeof(dolhdr);
-						dolhdr *dol = (dolhdr*)Buffer;
-						
-						for( i=0; i < 7; ++i )
-							DOLSize += dol->sizeText[i];
-						for( i=0; i < 11; ++i )
-							DOLSize += dol->sizeData[i];
-						
-						DOLReadSize = sizeof(dolhdr);
-						
-						DOLMaxOff=0;
-						for( i=0; i < 7; ++i )
+						if (Buffer == 0x01300000)
 						{
-							if( dol->addressText[i] == 0 )
-								continue;
-
-							if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
-								DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
+							dbgprintf("DIP:Game loading new .dol!\n");
+							DoPatchesLoader( (char*)(Buffer), Length );
+							PatchState = 2;
 						}
+					//Get the main.dol header read so we know once the dol is completly loaded so we can patch it
+					} else if (PatchState == 2)
+					{
+						if ( (Buffer >> 20 ) == 0x12 && Length == 256 )
+						{
+							DOLOffset = Offset;
+							
+							//quickly calc the size
+							DOLSize = sizeof(dolhdr);
+							dolhdr *dol = (dolhdr*)Buffer;
+							
+							for( i=0; i < 7; ++i )
+								DOLSize += dol->sizeText[i];
+							for( i=0; i < 11; ++i )
+								DOLSize += dol->sizeData[i];
+							
+							DOLReadSize = sizeof(dolhdr);
+							
+							DOLMaxOff=0;
+							for( i=0; i < 7; ++i )
+							{
+								if( dol->addressText[i] == 0 )
+									continue;
 
-						DOLMaxOff -= 0x80003100; 
+								if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
+									DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
+							}
 
-						dbgprintf("DIP:DOLSize:%d DOLMaxOff:0x%08X\n", DOLSize, DOLMaxOff );
-						
-						PatchState = 3;
+							DOLMaxOff -= 0x80003100; 
+
+							dbgprintf("DIP:DOLOffset:%d DOLSize:%d DOLMaxOff:0x%08X\n", DOLOffset, DOLSize, DOLMaxOff );
+							
+							PatchState = 3;
+						}
 					} else if( PatchState == 3 )
 					{
 						DOLReadSize += Length;
 						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
 						if( DOLReadSize == DOLSize )
 						{
-							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 0 );
-							PatchState = 4;
+							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, DOLOffset );
+							PatchState = 1;
 #ifdef CODES
 							DIReadKenobiGC();
 							DIReadCodes();
 #endif
+							switch( read32( 0 ) & 0xFF )
+							{
+								default:
+								case 'E':
+								case 'J':
+								{
+									write32( 0xCC, 0 );
+								} break;
+								case 'P':
+								{
+									if( SRAM_GetVideoMode() & GCVideoModePROG )
+										write32( 0xCC, 0 );
+									else
+										write32( 0xCC, 5 );
+								} break;
+							}
+								
+							dbgprintf("Video:%08x\n", *(u32*)0xCC );
 						}
 					}
 										

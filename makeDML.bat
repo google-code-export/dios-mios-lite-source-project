@@ -1,8 +1,8 @@
 @IF NOT EXIST MIOSv10\0000000c.app @GOTO filenotfound
-cd DML
+@cd DML
 make clean
 make
-cd..
+@cd..
 @GOTO end
 
 :filenotfound

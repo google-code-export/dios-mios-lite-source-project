@@ -421,13 +421,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
-	//Reset all 'Founds'
-	if( UseCache == 0 )
-	{
-		for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
-			FPatterns[j].Found = 0;
-	}
-
 	//EXIControl(1);
 
 //Hacks and other stuff
@@ -474,8 +467,10 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 #endif
 	
 	//cache stuff
+	static char cachename[32] ALIGNED(32);
+	sprintf(cachename, "cache%08x.bin", UseCache);
 
-	if( f_open( &PCache, "dmcache.bin", FA_READ | FA_OPEN_EXISTING ) == FR_OK && UseCache )
+	if (UseCache && f_open( &PCache, cachename, FA_READ | FA_OPEN_EXISTING ) == FR_OK)
 	{
 		dbgprintf("Patch:Found cache file\n");
 		if( PCache.fsize == 0 )
@@ -486,11 +481,15 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	} else {
 
 SPatches:
-		//Don't use the same file, it will cause a fail next time the game boots
-		if( UseCache )
-			f_open( &PCache, "dmcache.bin", FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
-		else
-			f_open( &PCache, "dmcache.bin", FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
+		//Reset all 'Founds'
+		//if( UseCache == 0 )
+		//{
+			for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
+				FPatterns[j].Found = 0;
+		//}
+
+		// Open the cache file to write the patch locations into it
+		f_open( &PCache, cachename, FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
 
 		memset( &PC, 0, sizeof( PatchCache ) );
 
@@ -501,10 +500,8 @@ SPatches:
 
 		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 		
-		u32 PatchCount = 0;
-	
 		// DVD read patch
-		for( i=0; (i < size && PatchCount == 0); i+=4 )
+		for( i=0; i < size; i+=4 )
 		{
 			if( read32( (u32)ptr + i ) == 0x3C60A800 ||	// Games
 				read32( (u32)ptr + i ) == 0x3C00A800	// DolLoaders
@@ -539,7 +536,6 @@ SPatches:
 				PC.PatchID = 0xdead0005;
 				
 				dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", PC.Offset + SectionOffset );
-				PatchCount = 1;
 
 				f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 				break;

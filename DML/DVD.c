@@ -4,8 +4,8 @@ DVDConfig *DICfg = (DVDConfig *)NULL;
 u32 read;
 
 extern FIL GameFile;
-extern u32 DOLMaxOff;
-extern u32 DOLOffset;
+//extern u32 DOLMaxOff;
+//extern u32 DOLOffset;
 
 #ifdef CODES
 extern FIL KenobiGCFile;
@@ -35,8 +35,8 @@ void DVDReadConfig( void )
 */
 s32 DVDSelectGame( void )
 {
-	u32 i;
-	dolhdr *dol;
+	//u32 i;
+	//dolhdr *dol;
 	FIL BootInfo;
 
 	char *str = (char *)malloca( 0x100, 32 );
@@ -160,7 +160,7 @@ s32 DVDSelectGame( void )
 	}
 	
 	SRAM_Flush();
-
+/*
 	DOLOffset = *(u32*)str;
 	dbgprintf("DIP:DOL Offset:0x%06X\n", DOLOffset );
 
@@ -181,6 +181,7 @@ s32 DVDSelectGame( void )
 
 	DOLMaxOff -= 0x80003100; 
 	dbgprintf("DIP:DOL MaxOffset:0x%06X\n", DOLMaxOff );
+*/
 
 	free( str );
 
