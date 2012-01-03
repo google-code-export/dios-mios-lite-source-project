@@ -29,7 +29,7 @@ void *malloc( u32 size )
 	if( size > _AHEAP_SIZE )
 		return NULL;
 
-	//align size to 32, easy cheat toallow all allocs to be aligned easily
+	//align size to 32, easy cheat to allow all allocs to be aligned easily
 	size = (size+0x1F) & (~0x1F);
 
 	//find a free entry to be used

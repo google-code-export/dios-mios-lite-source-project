@@ -261,7 +261,7 @@ int main( int argc, char *argv[] )
 	dbgprintf("MEMInitLow()...\n");
 	MEMInitLow();
 
-	EHCIInit();
+	//EHCIInit();
 	//dbgprintf("EHCIInit()\n");
 	
 	udelay(8000);
@@ -289,7 +289,10 @@ int main( int argc, char *argv[] )
 	LowReadDiscID((void*)0);
 
 	u32 DVDError = DVDLowGetError();
-	dbgprintf("DVD:Error:%08X\n", DVDError );
+	if (DVDError)
+	{
+		dbgprintf("DVD:Error:%08X\n", DVDError );
+	}
 
 	if ( (DVDError >> 24 ) == 0x01 )
 	{
@@ -305,9 +308,9 @@ int main( int argc, char *argv[] )
 		dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
 	}
 	
-	check_MIOS_patches();
-
 	DVDSelectGame();
+
+	check_MIOS_patches();
 
 	CardInit();
 		
@@ -322,6 +325,8 @@ int main( int argc, char *argv[] )
 	write32( 0x30F8, 0 );			// Tell PPC side to start
 
 	ahb_flush_to( AHB_PPC );
+
+	dbgprintf("DML main loop start\n");
 
 	while (1)
 	{

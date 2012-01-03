@@ -721,11 +721,11 @@ void MIOSHWInit( u32 A, u32 B )
 
 	MIOSUnkInit();
 
-	MIOSEHCIInit( SP[1] );
+	//MIOSEHCIInit( SP[1] );
 
 	set32( HW_RESETS, 0x7FDFBCF );
 
-	MIOSEHCIInit2();
+	//MIOSEHCIInit2();
 }
 void UNKInit( u32 A, u32 B )
 {

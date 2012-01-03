@@ -13,7 +13,7 @@ extern FIL CodesFile;
 extern u32 HandlerFlag;
 extern u32 CodesFlag;
 #endif
-
+/*
 void DVDReadConfig( void )
 {
 	char *str = (char*)malloca( 128, 32 );
@@ -32,6 +32,7 @@ void DVDReadConfig( void )
 	f_close( &f );
 	free(str);
 }
+*/
 s32 DVDSelectGame( void )
 {
 	u32 i;
