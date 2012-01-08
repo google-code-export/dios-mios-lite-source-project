@@ -105,7 +105,7 @@ FuncPattern LPatterns[] =
 	{ 0x280,        50,     22,     8,      18,     12, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 	{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 
-#ifndef fwrite_patch
+#ifdef fwrite_patch
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite A",				5,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite B",				5,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite C",				5,		0 },
@@ -891,7 +891,7 @@ SPatches:
 					break;
 #endif
 #ifndef fwrite_patch
-				// This pattern is not removed when the non frite version is built, so both versions can use the same cache
+				// This pattern is not removed when the non fwrite version is built, so both versions can use the same cache
 				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
 					break;
 #endif

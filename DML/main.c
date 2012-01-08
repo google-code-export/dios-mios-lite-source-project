@@ -215,11 +215,11 @@ void check_MIOS_patches()
 int main( int argc, char *argv[] )
 {
 	udelay(800);
-	
+
 	PPCReset();
 	clear32( HW_RESETS, 0x48000 );
 	clear32( 0xD800184, 0x438E );
-	
+
 	ChangeClock();
 
 	DRAMInit(1,0);
@@ -229,21 +229,36 @@ int main( int argc, char *argv[] )
 
 	UNKInit( 1, 1 );
 
+  // Comment this code when loading DML as MIOS from real nand
+  //PPCReset();
+  //clear32( HW_RESETS, 0x48000 );
+  //clear32( 0xD800184, 0x438E );
+  //
+  //ChangeClock();
+
+  //DRAMInit(1,0);
+
+  //set32( HW_RESETS, 0x48000 );
+  //set32( 0xD800184, 0x438E );
+
+  //UNKInit( 1, 1 );
+
 	set32( 0xD800038, IRQ_RESET|IRQ_GPIO1 );
 	set32( 0xD80003C, IRQ_RESET|IRQ_GPIO1 );
 	udelay(200);
-	
+
 	u32 SP[2];
 	GetRevision( SP+1, SP );
 	if( SP[1] == 0 )
 	{
 		write32( HW_MEMIRR, 0x67 );
-	} else {
+	} else
+	{
 		write32( HW_MEMIRR, 0x27 );
 	}
 
 	MIOSInit();
-
+  
 #ifdef DEBUG
 	dbgprintf("$IOSVersion: DIOS-MIOS Lite INTERNAL: " __DATE__ " " __TIME__ " 64M DEBUG$\n");
 	//dbgprintf("This is an INTERNAL version and may not be copied or re-distributed without prior written consent!\n");
