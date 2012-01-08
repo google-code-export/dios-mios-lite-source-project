@@ -5,6 +5,57 @@
 #include "FwritePatches.c"
 #include "CheatCode.c"
 
+// Audio streaming replacement functions copied from Swiss r92
+u32 __dvdLowAudioStatusNULL[17] = {
+        // execute function(1); passed in on r4
+        0x9421FFC0,     //  stwu        sp, -0x0040 (sp)
+        0x7C0802A6,     //  mflr        r0
+        0x90010000,     //  stw         r0, 0 (sp)
+        0x7C8903A6,     //  mtctr       r4
+        0x3C80CC00,     //  lis         r4, 0xCC00
+        0x2E830000,     //  cmpwi       cr5, r3, 0
+        0x4196000C,     //  beq-        cr5, +0xC ?
+        0x38600001,     //  li          r3, 1
+        0x48000008,     //  b           +0x8 ?
+        0x38600000,     //  li          r3, 0
+        0x90646020,     //  stw         r3, 0x6020 (r4)
+        0x38600001,     //  li          r3, 1
+        0x4E800421,     //  bctrl
+        0x80010000,     //  lwz         r0, 0 (sp)
+        0x7C0803A6,     //  mtlr        r0
+        0x38210040,     //  addi        sp, sp, 64
+        0x4E800020      //  blr
+};
+
+u32 __dvdLowAudioConfigNULL[10] = {
+        // execute callback(1); passed in on r5 without actually touching the drive!
+        0x9421FFC0,     //  stwu        sp, -0x0040 (sp)
+        0x7C0802A6,     //  mflr        r0
+        0x90010000,     //  stw         r0, 0 (sp)
+        0x7CA903A6,     //  mtctr       r5
+        0x38600001,     //  li          r3, 1
+        0x4E800421,     //  bctrl
+        0x80010000,     //  lwz         r0, 0 (sp)
+        0x7C0803A6,     //  mtlr        r0
+        0x38210040,     //  addi        sp, sp, 64
+        0x4E800020      //  blr
+};
+
+u32 __dvdLowReadAudioNULL[] = {
+        // execute callback(1); passed in on r6 without actually touching the drive!
+        0x9421FFC0,     //  stwu        sp, -0x0040 (sp)
+        0x7C0802A6,     //  mflr        r0
+        0x90010000,     //  stw         r0, 0 (sp)
+        0x7CC903A6,     //  mtctr       r6
+        0x38600001,     //  li          r3, 1
+        0x4E800421,     //  bctr;
+        0x80010000,     //  lwz         r0, 0 (sp)
+        0x7C0803A6,     //  mtlr        r0
+        0x38210040,     //  addi        sp, sp, 64
+        0x4E800020
+};
+
+
 unsigned char OSReportDM[] =
 {
 	0x7C, 0x08, 0x02, 0xA6, 0x90, 0x01, 0x00, 0x04, 0x90, 0xE1, 0x00, 0x08, 0x3C, 0xE0, 0xC0, 0x00, 
@@ -23,7 +74,7 @@ FuncPattern FPatterns[] =
 
 	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
 	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
-	{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",			0,		0 },
+	//{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",			0,		0 },
 	//{ 0xC0,			15,     9,      5,      3,      2,	DVDPrepareStreamAbsAsync,	sizeof(DVDPrepareStreamAbsAsync),"DVDPrepareStreamAbsAsync",	0,		0 },
 	//{ 0xB8,			15,     7,      5,      3,      2,	(u8*)NULL,					0xdead0010,						"DVDStream*",					0,		0 },
 
@@ -35,6 +86,10 @@ FuncPattern FPatterns[] =
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
 
 	{ 0x824,        111,    44,     13,     53,     64,	(u8*)NULL,					0xdead0000,						"VIInit",						0,		0 },
+	
+	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 0, 0 },
+	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 0, 0 },
+	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 0, 0 },
 };		
 
 
@@ -410,6 +465,7 @@ void DoPatchesLoader( char *ptr, u32 size )
 }
 void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 {
+	u32 magicword;
 	FIL PCache;
 	u32 i=0,j=0,k=0,read;
 	//u32 offset=0;
@@ -473,10 +529,19 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	if (UseCache && f_open( &PCache, cachename, FA_READ | FA_OPEN_EXISTING ) == FR_OK)
 	{
 		dbgprintf("Patch:Found cache file\n");
+		
 		if( PCache.fsize == 0 )
 		{
+			dbgprintf("Patch:But file size is 0\n");
 			f_close( &PCache );
 			goto SPatches;
+		}
+		f_read( &PCache, &magicword, 4, &read );
+		if (magicword != 0xC0DE0000)
+		{
+			dbgprintf("Patch:Wrong magic word: %08x\n");
+			f_close( &PCache );
+			goto SPatches;		
 		}
 	} else {
 
@@ -490,6 +555,9 @@ SPatches:
 
 		// Open the cache file to write the patch locations into it
 		f_open( &PCache, cachename, FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
+		
+		magicword = 0xC0DE0000;
+		f_write( &PCache, &magicword, 4, &read );
 
 		memset( &PC, 0, sizeof( PatchCache ) );
 
@@ -501,7 +569,8 @@ SPatches:
 		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 		
 		// DVD read patch
-		for( i=0; i < size; i+=4 )
+		bool dvd_read_patched = false;
+		for( i=0; ((i < size) && (!dvd_read_patched)); i+=4 )
 		{
 			if( read32( (u32)ptr + i ) == 0x3C60A800 ||	// Games
 				read32( (u32)ptr + i ) == 0x3C00A800	// DolLoaders
@@ -538,8 +607,12 @@ SPatches:
 				dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", PC.Offset + SectionOffset );
 
 				f_write( &PCache, &PC, sizeof( PatchCache ), &read );
-				break;
-			}
+				dvd_read_patched = true;
+			}			
+		}
+		if (!dvd_read_patched)
+		{
+			dbgprintf("Patch:Critical Error [DVDLowRead] not patched\n");
 		}
 
 		for( i=0; i < size; i+=4 )
@@ -593,6 +666,12 @@ SPatches:
 	f_sync( &PCache );
 	f_lseek( &PCache, 0 );
 
+	f_read( &PCache, &magicword, 4, &read );
+	if (magicword != 0xC0DE0000)
+	{
+		dbgprintf("Patch:Wrong magic word(how?): %08x\n");
+	}
+
 	for( i=0; i < PCache.fsize / sizeof(PatchCache); ++i )
 	{
 		f_read( &PCache, &PC, sizeof(PatchCache), &read );
@@ -637,6 +716,7 @@ SPatches:
 					//DoCardPatches( ptr+PC.Offset, size, SectionOffset );					
 				}
 			} break;
+			/*	This should not be required anymore
 			case 0xdead0004:	// Audiostreaming hack
 			{
 				switch( read32(0) >> 8 )
@@ -650,6 +730,7 @@ SPatches:
 					} break;
 				}
 			} break;
+			*/
 			case 0xdead0005:
 			{
 				dbgprintf("Patch:Applying Patch[DVDLowRead]: 0x%08X \n", PC.Offset | 0x80000000 );
@@ -810,11 +891,17 @@ SPatches:
 					break;
 #endif
 #ifndef fwrite_patch
-				// Removing patterns from FPatterns causes a big problem with the cache
+				// This pattern is not removed when the non frite version is built, so both versions can use the same cache
 				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
 					break;
 #endif
 				memcpy( (void*)(PC.Offset), FPatterns[PC.PatchID].Patch, FPatterns[PC.PatchID].PatchLength );
+				
+				if ((FPatterns[PC.PatchID].Patch == (u8 *)__dvdLowAudioStatusNULL) && ((read32(0) >> 8) == 0x47494B))
+				{
+					write32(PC.Offset + 36, 0x38600001);
+					dbgprintf("Patch:LowAudioStatus patched for Ikaruga\n");
+				}
 			} break;
 		}
 		

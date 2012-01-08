@@ -235,7 +235,7 @@ void DIUpdateRegisters( void )
 					//Get the main.dol header read so we know once the dol is completly loaded so we can patch it
 					} else if (PatchState == 2)
 					{
-						if ( (Buffer >> 20 ) == 0x12 && Length == 256 )
+						if ( Length == 256 && ((Buffer >> 20 ) == 0x12 || *(u32 *)Buffer == 0x00000100) )
 						{
 							DOLOffset = Offset;
 							
