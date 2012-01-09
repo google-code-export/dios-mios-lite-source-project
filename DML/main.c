@@ -216,6 +216,7 @@ int main( int argc, char *argv[] )
 {
 	udelay(800);
 
+/*	The BC replacement code is not required when executing the actual BC
 	PPCReset();
 	clear32( HW_RESETS, 0x48000 );
 	clear32( 0xD800184, 0x438E );
@@ -228,21 +229,7 @@ int main( int argc, char *argv[] )
 	set32( 0xD800184, 0x438E );
 
 	UNKInit( 1, 1 );
-
-  // Comment this code when loading DML as MIOS from real nand
-  //PPCReset();
-  //clear32( HW_RESETS, 0x48000 );
-  //clear32( 0xD800184, 0x438E );
-  //
-  //ChangeClock();
-
-  //DRAMInit(1,0);
-
-  //set32( HW_RESETS, 0x48000 );
-  //set32( 0xD800184, 0x438E );
-
-  //UNKInit( 1, 1 );
-
+*/	
 	set32( 0xD800038, IRQ_RESET|IRQ_GPIO1 );
 	set32( 0xD80003C, IRQ_RESET|IRQ_GPIO1 );
 	udelay(200);

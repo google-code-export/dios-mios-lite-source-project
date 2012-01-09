@@ -1,0 +1,1 @@
+Compile DML and then create a new MIOS with the 0000000c.app file from here.

@@ -23,9 +23,9 @@ $(TARGET) : iosmodule.ld $(OBJECTS)
 	@echo  "LD	$@"
 	@$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 	@$(SSTRIP) -s $@
-	@../FixELF/FixELF.exe ../MIOSv10/0000000c.app iosmodule.elf ../NAND/title/00000001/00000100/content/00000008.app
+	@../FixELF/FixELF.exe ../MIOSv10/0000000c.app iosmodule.elf ../output/0000000c.app
 	@echo  
-	@echo DML was copied to NAND/title/00000001/00000100/content/00000008.app
+	@echo DML was copied to output/0000000c.app
 
 
 %.o : %.s
@@ -55,4 +55,4 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 
 clean:
-	-rm -f *.elf *.o *.bin *.d *.map ../NAND/title/00000001/00000100/content/00000008.app
+	-rm -f *.elf *.o *.bin *.d *.map ../output/0000000c.app
