@@ -678,6 +678,15 @@ SPatches:
 
 		u32 PatchLength;
 		
+#if defined(CHEATHOOK) || !defined(fwrite_patch)
+		// This pattern is not removed when the non fwrite version is built, so both versions can use the same cache
+		// And using the fwrite patch is not a good idea when using the Ocarina code handler
+		if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
+		{
+			dbgprintf("Patch:Skipping Patch[%s]: 0x%08X \n", FPatterns[PC.PatchID].Name, PC.Offset | 0x80000000 );
+			break;
+		}
+#endif
 		if( (PC.PatchID & 0xFFFF0000) == 0xdead0000 )
 		{
 			PatchLength = PC.PatchID;
@@ -886,15 +895,6 @@ SPatches:
 			//} break;
 			default:
 			{
-#ifdef CHEATHOOK
-				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
-					break;
-#endif
-#ifndef fwrite_patch
-				// This pattern is not removed when the non fwrite version is built, so both versions can use the same cache
-				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
-					break;
-#endif
 				memcpy( (void*)(PC.Offset), FPatterns[PC.PatchID].Patch, FPatterns[PC.PatchID].PatchLength );
 				
 				if ((FPatterns[PC.PatchID].Patch == (u8 *)__dvdLowAudioStatusNULL) && ((read32(0) >> 8) == 0x47494B))
