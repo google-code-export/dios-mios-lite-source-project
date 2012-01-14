@@ -8,6 +8,7 @@
 #include "asm\DVDReadAbsAsyncPrioAsync.h"
 #include "asm\mDVDReadAbsAsyncPrio.h"
 #include "asm\DVDReadAbsAsyncPrio.h"
+#include "asm\LDVDReadAbsAsyncPrio.h"
 #include "asm\mDVDReadAbsAsyncPrioShift.h"
 #include "asm\DVDReadDiscIDAsync.h"
 #include "asm\DVDInquiryAsync.h"

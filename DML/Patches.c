@@ -95,10 +95,12 @@ FuncPattern FPatterns[] =
 
 FuncPattern LPatterns[] =
 {	
-	{ 0xFC,			20,     4,      7,      6,      7,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
-	{ 0xD8,			17,     12,     5,      3,      2,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
-	{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
-	{ 0xCC,			16,     11,     5,      3,      2,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
+	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
+	{ 0xD8,			17,     12,     5,      3,      2,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
+
+	//DVDReadAbsAsyncPrioForBS calls DVDReadAbsAsyncPrio, so it's not needed to patch it
+	//{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
+	//{ 0xCC,			16,     11,     5,      3,      2,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
 
 
 	{ 0x270,        70,     6,      13,     12,     13,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
@@ -684,7 +686,7 @@ SPatches:
 		if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
 		{
 			dbgprintf("Patch:Skipping Patch[%s]: 0x%08X \n", FPatterns[PC.PatchID].Name, PC.Offset | 0x80000000 );
-			break;
+			continue;
 		}
 #endif
 		if( (PC.PatchID & 0xFFFF0000) == 0xdead0000 )
