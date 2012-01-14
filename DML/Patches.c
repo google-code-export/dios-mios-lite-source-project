@@ -70,7 +70,8 @@ FuncPattern FPatterns[] =
 	//{ 0xBC,			20,     3,      3,      4,      7,	DVDReadAsync,			sizeof(DVDReadAsync),			"DVDReadAsync",					0,		0 },
 	//{ 0x114,        23,     2,      6,      9,      8,	DVDRead,				sizeof(DVDRead),				"DVDRead",						0,		0 },
 	//{ 0xD8,			17,     12,     5,      3,      2,	DVDReadAbsAsyncPrioAsync,		sizeof(DVDReadAbsAsyncPrioAsync),	"DVDReadAbsAsyncPrio",			0,		0 },
-	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,		0xdead0006,	"DVDReadAbsAsyncPrio",			0,		0 },
+	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio FC",			3,		0 },
+	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,				0xdead0006,						"DVDReadAbsAsyncPrio D8",			3,		0 },
 
 	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
 	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
@@ -95,8 +96,8 @@ FuncPattern FPatterns[] =
 
 FuncPattern LPatterns[] =
 {	
-	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
-	{ 0xD8,			17,     12,     5,      3,      2,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
+	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio FC",		1,		0 },
+	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,				0xdead0006,						"DVDReadAbsAsyncPrio D8",		1,		0 },
 
 	//DVDReadAbsAsyncPrioForBS calls DVDReadAbsAsyncPrio, so it's not needed to patch it
 	//{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
@@ -281,6 +282,49 @@ void apply_dvd_read_patch(u32 offset)
 	}
 }
 
+void patch_DVDReadAbsAsyncPrio(u32 offset)
+{
+	u32 j;
+	//Search for DCInvalidateRange function call
+	j=0;
+	while( read32( offset + j ) != 0x4E800020 )
+	{
+		if( (read32( offset + j ) & 0xFC000003) == 0x48000001 )
+		{
+			dbgprintf("DIP:DCInvalidateRange @ %08X\n", (offset + j) | 0x80000000 );
+			memcpy( (void*)0x2E30, DVDReadAbsAsyncPrio, sizeof(DVDReadAbsAsyncPrio) );
+			PatchBL( 0x2E30, offset + j );
+
+			break;
+		}
+		j+=4;
+	}
+
+	//Patch branches
+	j=0;
+	u32 count=0;
+	while( read32( offset + j ) != 0x4E800020 )
+	{
+		if( (read32( offset + j ) & 0xFF000003) == 0x41000000 )
+		{
+			dbgprintf("DIP:Branch @ %08X\n", (offset + j) | 0x80000000 );
+
+			if( count == 0 )
+			{
+				write32( offset + j, 0x60000000 );
+
+			} else if( count == 1 )
+			{
+				write32( offset + j, (read32(offset + j) & 0x0000FFFF) | 0x48000000 );
+
+			} else {
+				break;
+			}
+			count++;
+		}
+		j+=4;
+	}
+}
 
 void create_Pattern(u8 *Data, u32 Length, FuncPattern *FP)
 {
@@ -543,7 +587,13 @@ void DoPatchesLoader( char *ptr, u32 size )
 			{
 				dbgprintf("Patch:Found [%s]: 0x%08X\n", LPatterns[j].Name, ((u32)ptr + i) | 0x80000000 );
 
-				memcpy( (void*)(ptr+i), LPatterns[j].Patch, LPatterns[j].PatchLength );
+				if (LPatterns[j].PatchLength == 0xdead0006)
+				{
+					patch_DVDReadAbsAsyncPrio((u32)ptr+i);
+				} else
+				{				
+					memcpy( (void*)(ptr+i), LPatterns[j].Patch, LPatterns[j].PatchLength );
+				}
 
 				LPatterns[j].Found = 1;
 
@@ -640,7 +690,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 			goto SPatches;
 		}
 		f_read( &PCache, &magicword, 4, &read );
-		if (magicword != 0xC0DE0000)
+		if (magicword != 0xC0DE0001)
 		{
 			dbgprintf("Patch:Wrong magic word: %08x\n");
 			f_close( &PCache );
@@ -659,7 +709,7 @@ SPatches:
 		// Open the cache file to write the patch locations into it
 		f_open( &PCache, cachename, FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
 		
-		magicword = 0xC0DE0000;
+		magicword = 0xC0DE0001;
 		f_write( &PCache, &magicword, 4, &read );
 
 		memset( &PC, 0, sizeof( PatchCache ) );
@@ -732,7 +782,7 @@ SPatches:
 	f_lseek( &PCache, 0 );
 
 	f_read( &PCache, &magicword, 4, &read );
-	if (magicword != 0xC0DE0000)
+	if (magicword != 0xC0DE0001)
 	{
 		dbgprintf("Patch:Wrong magic word(how?): %08x\n");
 	}
@@ -811,45 +861,7 @@ SPatches:
 			} break;
 			case 0xdead0006:
 			{				
-				//Search for DCInvalidateRange function call
-				j=0;
-				while( read32( PC.Offset + j ) != 0x4E800020 )
-				{
-					if( (read32( PC.Offset + j ) & 0xFC000003) == 0x48000001 )
-					{
-						dbgprintf("DIP:DCInvalidateRange @ %08X\n", (PC.Offset + j) | 0x80000000 );
-						memcpy( (void*)0x2E30, DVDReadAbsAsyncPrio, sizeof(DVDReadAbsAsyncPrio) );
-						PatchBL( 0x2E30, PC.Offset + j );
-
-						break;
-					}
-					j+=4;
-				}
-
-				//Patch branches
-				j=0;
-				u32 count=0;
-				while( read32( PC.Offset + j ) != 0x4E800020 )
-				{
-					if( (read32( PC.Offset + j ) & 0xFF000003) == 0x41000000 )
-					{
-						dbgprintf("DIP:Branch @ %08X\n", (PC.Offset + j) | 0x80000000 );
-
-						if( count == 0 )
-						{
-							write32( PC.Offset + j, 0x60000000 );
-
-						} else if( count == 1 )
-						{
-							write32( PC.Offset + j, (read32(PC.Offset + j) & 0x0000FFFF) | 0x48000000 );
-
-						} else {
-							break;
-						}
-						count++;
-					}
-					j+=4;
-				}
+				patch_DVDReadAbsAsyncPrio(PC.Offset);
 			} break;
 			//case 0xdead0010:
 			//{
