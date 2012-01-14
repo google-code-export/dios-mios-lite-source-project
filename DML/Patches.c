@@ -102,8 +102,8 @@ FuncPattern LPatterns[] =
 	//{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
 	//{ 0xCC,			16,     11,     5,      3,      2,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
 
-
-	{ 0x270,        70,     6,      13,     12,     13,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
+	//This is not required, because the dvd read patch for games is used for apploaders as well now
+	//{ 0x270,        70,     6,      13,     12,     13,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
 	{ 0x280,        50,     22,     8,      18,     12, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 	{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 
@@ -189,6 +189,98 @@ void PatchGCIPL( void )
 //UNKReport
 	PatchB( 0x1304320, 0x13117AC );
 }
+
+bool find_dvd_read(u32 offset, u32 size, u32 *patch_offset)
+{
+	u32 i;
+	for( i=0; (i < size); i+=4 )
+	{
+		if( read32( offset + i ) == 0x3C60A800 ||	// Games
+			read32( offset + i ) == 0x3C00A800	// DolLoaders
+			) 
+		{
+			int j=0;
+			while( read32( offset + i - j ) != 0x7C0802A6 )
+				j+=4;
+
+			//Check if there is a lis %rX, 0xCC00 in this function
+			//At least Sunshine has one false hit on lis r3,0xA800
+			int k=0;
+			while( 1 )
+			{
+				if( read32( offset + i + k - j ) == 0x4E800020 )
+					break;
+				if( (read32( offset + i + k - j ) & 0xF81FFFFF) == 0x3800CC00 )
+					break;
+
+				k += 4;
+			}
+		
+			if( read32( offset + i + k - j ) == 0x4E800020 )
+				continue;
+			
+			*patch_offset = offset + i - j;
+			
+			dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", offset + i - j + 0x80000000 );
+
+			return true;
+		}			
+	}
+	return false;
+}	
+
+void apply_dvd_read_patch(u32 offset)
+{
+	u32 j;
+	dbgprintf("Patch:Applying Patch[DVDLowRead]: 0x%08X \n", offset | 0x80000000 );
+					
+	//Search for __OSGetSystemTime function call
+	j=0;
+	while( read32( offset + j ) != 0x4E800020 )
+	{
+		if( (read32( offset + j ) & 0xFC000003) == 0x48000001 )
+		{
+			u32 dst = read32( offset + j ) & 0x03FFFFFC;
+				dst = ~dst;
+				dst = (dst + 1) & 0x03FFFFFC;
+				dst = offset + j -dst;
+
+			dbgprintf("DIP:__OSGetSystemTime @ %08X->%08X\n", offset + j, dst );
+			memcpy( (void*)0x2E00, DVDLowRead, sizeof(DVDLowRead) );
+			PatchBL( dst, 0x2E1C );
+			PatchBL( 0x2E00, offset + j );
+
+			break;
+		}
+		j+=4;
+	}
+	
+	//Search for lis rX, 0xA800
+	j=0;
+	while( read32( offset + j ) != 0x4E800020 )
+	{
+		if( (read32( offset + j ) & 0x0000FFFF) == 0x0000A800 )
+		{
+			write32( offset + j, (read32(offset + j) & 0xFFFF0000) | 0xE000 );
+			dbgprintf("DIP:lis rX, 0xA800 @ %08X\n", offset + j );
+			break;
+		}
+		j+=4;					
+	}
+	//Search for li rX, 3
+	j=0;
+	while( read32( offset + j ) != 0x4E800020 )
+	{
+		if( (read32( offset + j ) & 0x0000FFFF) == 0x00000003 )
+		{
+			write32( offset + j, (read32(offset + j) & 0xFFFF0000) | 1 );
+			dbgprintf("DIP:li  rX, 3 @ %08X\n", offset + j );
+			break;
+		}
+		j+=4;
+	}
+}
+
 
 void create_Pattern(u8 *Data, u32 Length, FuncPattern *FP)
 {
@@ -424,6 +516,15 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 	dbgprintf("DoPatchesLoader( 0x%p, %d )\n", ptr, size );
 
+	u32 dvd_read_offset;
+	if(find_dvd_read((u32)ptr, size, &dvd_read_offset))
+	{
+		apply_dvd_read_patch(dvd_read_offset);	
+	} else
+	{
+		dbgprintf("Patch:Critical Error [DVDLowRead] not found\n");
+	}
+
 	for( i=0; i < size; i+=4 )
 	{
 		if( read32( (u32)ptr + i ) != 0x4E800020 )
@@ -570,53 +671,15 @@ SPatches:
 
 		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 		
-		// DVD read patch
-		bool dvd_read_patched = false;
-		for( i=0; ((i < size) && (!dvd_read_patched)); i+=4 )
+		if (find_dvd_read((u32)ptr, size, &PC.Offset))
 		{
-			if( read32( (u32)ptr + i ) == 0x3C60A800 ||	// Games
-				read32( (u32)ptr + i ) == 0x3C00A800	// DolLoaders
-				) 
-			{
-				u32 Loader = 0;
-
-				if( read32( (u32)ptr + i ) == 0x3C00A800 )
-					Loader = 1;
-
-				int j=0;
-				while( read32( (u32)ptr + i - j ) != 0x7C0802A6 )
-					j+=4;
-
-				//Check if there is a lis %rX, 0xCC00 in this function
-				//At least Sunshine has one false hit on lis r3,0xA800
-				int k=0;
-				while( 1 )
-				{
-					if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
-						break;
-					if( (read32( (u32)ptr + i + k - j ) & 0xF81FFFFF) == 0x3800CC00 )
-						break;
-
-					k += 4;
-				}
-			
-				if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
-					continue;
-				
-				PC.Offset  = (u32)ptr + i - j;
-				PC.PatchID = 0xdead0005;
-				
-				dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", PC.Offset + SectionOffset );
-
-				f_write( &PCache, &PC, sizeof( PatchCache ), &read );
-				dvd_read_patched = true;
-			}			
-		}
-		if (!dvd_read_patched)
+			PC.PatchID = 0xdead0005;
+			f_write( &PCache, &PC, sizeof( PatchCache ), &read );
+		} else		
 		{
-			dbgprintf("Patch:Critical Error [DVDLowRead] not patched\n");
+			dbgprintf("Patch:Critical Error [DVDLowRead] not found\n");
 		}
-
+		
 		for( i=0; i < size; i+=4 )
 		{
 			if( read32( (u32)ptr + i ) != 0x4E800020 )
@@ -744,53 +807,7 @@ SPatches:
 			*/
 			case 0xdead0005:
 			{
-				dbgprintf("Patch:Applying Patch[DVDLowRead]: 0x%08X \n", PC.Offset | 0x80000000 );
-								
-				//Search for __OSGetSystemTime function call
-				j=0;
-				while( read32( PC.Offset + j ) != 0x4E800020 )
-				{
-					if( (read32( PC.Offset + j ) & 0xFC000003) == 0x48000001 )
-					{
-						u32 dst = read32( PC.Offset + j ) & 0x03FFFFFC;
-							dst = ~dst;
-							dst = (dst + 1) & 0x03FFFFFC;
-							dst = PC.Offset + j -dst;
-
-						dbgprintf("DIP:__OSGetSystemTime @ %08X->%08X\n", PC.Offset + j, dst );
-						memcpy( (void*)0x2E00, DVDLowRead, sizeof(DVDLowRead) );
-						PatchBL( dst, 0x2E1C );
-						PatchBL( 0x2E00, PC.Offset + j );
-
-						break;
-					}
-					j+=4;
-				}
-				
-				//Search for lis rX, 0xA800
-				j=0;
-				while( read32( PC.Offset + j ) != 0x4E800020 )
-				{
-					if( (read32( PC.Offset + j ) & 0x0000FFFF) == 0x0000A800 )
-					{
-						write32( PC.Offset + j, (read32(PC.Offset + j) & 0xFFFF0000) | 0xE000 );
-						dbgprintf("DIP:lis rX, 0xA800 @ %08X\n", PC.Offset + j );
-						break;
-					}
-					j+=4;					
-				}
-				//Search for li rX, 3
-				j=0;
-				while( read32( PC.Offset + j ) != 0x4E800020 )
-				{
-					if( (read32( PC.Offset + j ) & 0x0000FFFF) == 0x00000003 )
-					{
-						write32( PC.Offset + j, (read32(PC.Offset + j) & 0xFFFF0000) | 1 );
-						dbgprintf("DIP:li  rX, 3 @ %08X\n", PC.Offset + j );
-						break;
-					}
-					j+=4;
-				}
+				apply_dvd_read_patch(PC.Offset);
 			} break;
 			case 0xdead0006:
 			{				
