@@ -86,11 +86,13 @@ FuncPattern FPatterns[] =
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
 
+	// Patch to allow using different video modes for games than intended
 	{ 0x824,        111,    44,     13,     53,     64,	(u8*)NULL,					0xdead0000,						"VIInit",						0,		0 },
 	
-	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 0, 0 },
-	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 0, 0 },
-	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 0, 0 },
+	// These 3 functions replace the 3 audio streaming related dvd commands
+	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 			0, 0 },
+	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 	0, 0 },
+	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 	0, 0 },
 };		
 
 
@@ -99,12 +101,15 @@ FuncPattern LPatterns[] =
 	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio FC",		1,		0 },
 	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,				0xdead0006,						"DVDReadAbsAsyncPrio D8",		1,		0 },
 
-	//DVDReadAbsAsyncPrioForBS calls DVDReadAbsAsyncPrio, so it's not needed to patch it
-	//{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
-	//{ 0xCC,			16,     11,     5,      3,      2,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
+	// This pattern might be broken
+	//{ 0x11C,		26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,		sizeof(DVDReadAbsAsyncPrio),		"DVDReadAbsAsyncPrioForBS",	2,	0 },
+
+	{ 0xCC, 		16, 	11, 	5, 		3, 		2, DVDReadAbsAsyncPrioForBS,	sizeof(DVDReadAbsAsyncPrioForBS),	"DVDReadAbsAsyncPrioForBS", 2, 0 },
 
 	//This is not required, because the dvd read patch for games is used for apploaders as well now
-	//{ 0x270,        70,     6,      13,     12,     13,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
+	//{ 0x270,      70,			6,      13,     12,		13,	dDVDReadAbs,			sizeof(dDVDReadAbs),				"DVDReadAbs",				6,	0 },
+	//{ 0x294,		68, 		19, 	9,		14,		18,	dDVDReadAbs, 			sizeof(dDVDReadAbs), 				"DVDReadAbs", 				6,	0 },
+	
 	{ 0x280,        50,     22,     8,      18,     12, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 	{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 
@@ -546,8 +551,7 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 			dbgprintf("Pattern %s not found!\n", CPatterns[j].Name );
 	}
 
-	return;
-
+	dbgprintf("Patches applied\n\n");
 }
 void DoPatchesLoader( char *ptr, u32 size )
 {
@@ -614,7 +618,7 @@ void DoPatchesLoader( char *ptr, u32 size )
 			}
 		}
 	}
-
+	dbgprintf("Patches applied\n\n");
 }
 void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 {
@@ -940,5 +944,6 @@ SPatches:
 
 //Write PatchCache to file
 	f_close( &PCache );
-
+	
+	dbgprintf("Patches applied\n\n");
 }

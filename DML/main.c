@@ -41,14 +41,13 @@ void SWI( u32 a, u32 b )
 }
 void PrefetchAbort( void )
 {
-	EXIControl(1);
+	//EXIControl(1);
 	dbgprintf("PrefetchAbort\n");
-	while(1);
-	return;
+	Shutdown();
 }
 void DataAbort( u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h )
 {
-	EXIControl(1);
+	//EXIControl(1);
 	dbgprintf("DataAbort: %x, %x, %x, %x, %x, %x, %x, %x\n",a,b,c,d,e,f,g,h);
 	Shutdown();
 }
@@ -80,7 +79,7 @@ void IRQHandler( void )
 			set32( HW_GPIO_ENABLE, GPIO_POWER );
 			set32( HW_GPIO_OUT, GPIO_POWER );
 
-			while(1);
+			Shutdown();
 		}
 	}
 
@@ -214,6 +213,7 @@ void check_MIOS_patches()
 
 int main( int argc, char *argv[] )
 {
+	bool boot_retail_disc = false;
 	udelay(800);
 
 /*	The BC replacement code is not required when executing the actual BC
@@ -300,8 +300,6 @@ int main( int argc, char *argv[] )
 	{
 		dbgprintf("DIP:No disc in drive, can't continue!\n");
 		Shutdown();
-		while(1);
-
 	} else if( (DVDError >> 24 ) == 0x02 || (DVDError >> 24 ) == 0x05  )
 	{
 		DVDLowReset();
@@ -310,7 +308,10 @@ int main( int argc, char *argv[] )
 		dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
 	}
 	
-	DVDSelectGame();
+	if (DVDSelectGame() < 0)
+	{
+		boot_retail_disc = true;
+	}
 
 	check_MIOS_patches();
 
@@ -320,7 +321,18 @@ int main( int argc, char *argv[] )
 
 	DIInit();
 	
-	PatchGCIPL();
+	if (!boot_retail_disc)
+	{
+		PatchGCIPL();
+	}
+
+#if defined(debugprintf) && !defined(debugprintfSD)
+	dbgprintf("Switching exi control to ppc. DML's debug output will be logged to sd:/dm.log\n");
+#ifdef fwrite_patch
+	dbgprintf("The games' fwrite output will still be logged via usb gecko\n");
+#endif
+#endif
+
 	EXIControl(0);
 
 	write32( 0x1860, 0xdeadbeef );	// Clear OSReport area
@@ -328,31 +340,37 @@ int main( int argc, char *argv[] )
 
 	ahb_flush_to( AHB_PPC );
 
-	dbgprintf("DML main loop start\n");
+	dbgprintf("\n\nDML main loop start\n");
 
-	while (1)
+	if (boot_retail_disc)
 	{
-		ahb_flush_from( AHB_STARLET );	//flush to arm
-		
-		if( read32(0x1860) != 0xdeadbeef )
+		while (1);
+	} else
+	{
+		while (1)
 		{
-			if( read32(0x1860) != 0 )
+			ahb_flush_from( AHB_STARLET );	//flush to arm
+			
+			if( read32(0x1860) != 0xdeadbeef )
 			{
-				//dbgprintf("%08X\n", P2C(read32(0x1860)) );
-				dbgprintf(	(char*)(P2C(read32(0x1860))),
-							(char*)(P2C(read32(0x1864))),
-							(char*)(P2C(read32(0x1868))),
-							(char*)(P2C(read32(0x186C))),
-							(char*)(P2C(read32(0x1870))),
-							(char*)(P2C(read32(0x1864)))
-						);
+				if( read32(0x1860) != 0 )
+				{
+					//dbgprintf("%08X\n", P2C(read32(0x1860)) );
+					dbgprintf(	(char*)(P2C(read32(0x1860))),
+								(char*)(P2C(read32(0x1864))),
+								(char*)(P2C(read32(0x1868))),
+								(char*)(P2C(read32(0x186C))),
+								(char*)(P2C(read32(0x1870))),
+								(char*)(P2C(read32(0x1864)))
+							);
+				}
+
+				write32(0x1860, 0xdeadbeef);
 			}
 
-			write32(0x1860, 0xdeadbeef);
+			DIUpdateRegisters();
+			//CARDUpdateRegisters();
+			ahb_flush_to( AHB_PPC );	//flush to ppc
 		}
-
-		DIUpdateRegisters();
-		//CARDUpdateRegisters();
-		ahb_flush_to( AHB_PPC );	//flush to ppc
 	}
 }

@@ -124,7 +124,7 @@ s32 CardOpenFile( char *Filename, CARDFileInfo *CFInfo )
 		} break;
 		default:
 		{
-			EXIControl(1);
+			//EXIControl(1);
 			dbgprintf("MC:Failed to open:\"%s\":%d\n", Filename, fres );
 			Shutdown();
 		} break;
@@ -174,7 +174,7 @@ s32 CardFastOpenFile( u32 FileNo, CARDFileInfo *CFInfo )
 		} break;
 		default:
 		{
-			EXIControl(1);
+			//EXIControl(1);
 			dbgprintf("MC:Failed to open:\"%s\":%d\n", CStat.fileName, fres );
 			Shutdown();
 		} break;
@@ -240,7 +240,7 @@ void CardCreateFile( char *Filename, u32 Size, CARDFileInfo *CFInfo )
 		} break;
 		default:
 		{
-			EXIControl(1);
+			//EXIControl(1);
 			dbgprintf("MC:Failed to create:\"%s\":%d\n", Filename, fres );
 			Shutdown();
 		} break;
@@ -333,19 +333,19 @@ void CardWriteFile( u32 FileNo, u8 *Buffer, u32 Length, u32 Offset )
 #ifdef CARD_DEBUG
 			if( f_lseek( &savefile, Offset ) != FR_OK )
 			{
-				EXIControl(1);
+				//EXIControl(1);
 				dbgprintf("Failed to seek to %08x\n", Offset );
 				Shutdown();
 			} else {
 				if( f_write( &savefile, (void*)Buffer, Length, &read ) != FR_OK )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("Failed to write %d bytes to %p\n", Length, Buffer );
 					Shutdown();					
 				}
 				if( read != Length )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("Short write; %d of %d bytes written!\n", read, Length );
 					Shutdown();			
 				}
@@ -358,7 +358,7 @@ void CardWriteFile( u32 FileNo, u8 *Buffer, u32 Length, u32 Offset )
 		} break;
 		default:
 		{
-			EXIControl(1);
+			//EXIControl(1);
 			dbgprintf("Failed to open:\"%s\"\n", CStat.fileName );
 			Shutdown();
 		} break;
@@ -476,10 +476,8 @@ void CARDUpdateRegisters( void )
 			} break;
 			default:
 			{
-				EXIControl(1);
-
+				//EXIControl(1);
 				dbgprintf("CARD:Unknown CMD:%08X %08X %08X %08X %08X %08X\n", read32(CARD_SCMD), read32(CARD_SCMD_1), read32(CARD_SCMD_2), read32(CARD_SCMD_3), read32(CARD_SCMD_4), read32(CARD_SCONTROL) );
-
 				Shutdown();
 			} break;
 			/* CARDOpen( char *FileName ) */
@@ -543,7 +541,7 @@ void CARDUpdateRegisters( void )
 					
 				if( read32(CARD_SCMD_1) >= CARD_MAX_FILES )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("MC: Invalid file slot!:%d\n", read32(CARD_SCMD_1) );
 					Shutdown();
 				}
@@ -604,7 +602,7 @@ void CARDUpdateRegisters( void )
 
 				if( read32(CARD_SCMD_1) >= CARD_MAX_FILES )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("\nMC: Invalid file slot!\n");
 					Shutdown();
 				}
@@ -702,7 +700,7 @@ void CARDUpdateRegisters( void )
 
 				if( FileNo >= CARD_MAX_FILES )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("\nMC: Invalid file slot!:%d\n", FileNo );
 					Shutdown();
 				}
@@ -729,7 +727,7 @@ void CARDUpdateRegisters( void )
 
 				if( FileNo >= CARD_MAX_FILES )
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("\nMC: Invalid file slot!:%d\n", FileNo );
 					Shutdown();
 				}

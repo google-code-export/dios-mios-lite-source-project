@@ -79,9 +79,9 @@ void DIUpdateRegisters( void )
 	{
 		if( read32( DI_CONTROL ) & (~3) )
 		{	
-			EXIControl(1);
+			//EXIControl(1);
 			dbgprintf("DIP:Bogus write to DI_CONTROL:%08X\n", read32( DI_CONTROL ) );			
-			while(1);
+			Shutdown();
 			
 			memset32( (void*)DI_BASE, 0xdeadbeef, 0x30 );
 			memset32( (void*)(DI_SHADOW), 0, 0x30 );
@@ -151,15 +151,15 @@ void DIUpdateRegisters( void )
 					if( GameFile.fptr != Offset )
 					if( f_lseek( &GameFile, Offset ) != FR_OK )
 					{
-						EXIControl(1);
+						//EXIControl(1);
 						dbgprintf("DIP:Failed to seek to 0x%08x\n", Offset );
-						while(1);
+						Shutdown();
 					}
 					if( f_read( &GameFile, (char*)Buffer, Length, &read ) != FR_OK )
 					{
-						EXIControl(1);
+						//EXIControl(1);
 						dbgprintf("DIP:Failed to read from 0x%08x to 0x%08X\n", Offset, Buffer );
-						while(1);
+						Shutdown();
 					}
 					//if( ((read+31)&(~31)) != Length )
 					//{
@@ -280,6 +280,9 @@ void DIUpdateRegisters( void )
 							DIReadKenobiGC();
 							DIReadCodes();
 #endif
+							u32 old_video_mode = read32(0xCC);
+							dbgprintf("Current video mode(0xCC): %d\n", old_video_mode);
+							
 							switch( read32( 0 ) & 0xFF )
 							{
 								default:
@@ -296,8 +299,10 @@ void DIUpdateRegisters( void )
 										write32( 0xCC, 5 );
 								} break;
 							}
-								
-							dbgprintf("Video:%08x\n", *(u32*)0xCC );
+							if (read32(0xCC) != old_video_mode)
+							{
+								dbgprintf("Video mode(0xCC) changed to: %d\n", read32(0xCC));
+							}
 						}
 					}
 										
@@ -323,9 +328,9 @@ void DIUpdateRegisters( void )
 				} break;
 				default:
 				{
-					EXIControl(1);
+					//EXIControl(1);
 					dbgprintf("DIP:Unknown CMD:%08X %08X %08X %08X %08X %08X\n", read32(DI_SCMD_0), read32(DI_SCMD_1), read32(DI_SCMD_2), read32(DI_SIMM), read32(DI_SDMA_ADR), read32(DI_SDMA_LEN) );
-					while(1);
+					Shutdown();
 				} break;
 			}
 #ifdef ACTIVITYLED

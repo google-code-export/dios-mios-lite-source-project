@@ -47,9 +47,18 @@ s32 DVDSelectGame( void )
 		case FR_OK:
 		{
 			char *Path = (char*)malloca( BootInfo.fsize, 32 );
+			
+			if (BootInfo.fsize == 0 || BootInfo.fsize > 32)
+			{
+				dbgprintf("DIP:/games/boot.bin filesize = %u. Loading retail disc instead.\n", BootInfo.fsize);
+				f_close( &BootInfo );
+				return -1;
+			}
 
 			f_read( &BootInfo, Path, BootInfo.fsize, &read );
 			f_close( &BootInfo );
+			
+			f_unlink(str);		// Delete the boot.bin, so retail discs can be loaded via the disc channel
 
 			sprintf( str, "/games/%s/game.iso", Path );
 
@@ -87,8 +96,8 @@ s32 DVDSelectGame( void )
 		} break;
 		default:
 		{
-			dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
-			Shutdown();
+			dbgprintf("DIP:Couldn't open /games/boot.bin. Loading retail disc instead.\n");
+			return -1;
 		} break;
 	}
 
