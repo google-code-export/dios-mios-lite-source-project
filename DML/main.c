@@ -41,13 +41,13 @@ void SWI( u32 a, u32 b )
 }
 void PrefetchAbort( void )
 {
-	//EXIControl(1);
+	EXIControl(1);
 	dbgprintf("PrefetchAbort\n");
-	Shutdown();
+	while(1);
 }
 void DataAbort( u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h )
 {
-	//EXIControl(1);
+	EXIControl(1);
 	dbgprintf("DataAbort: %x, %x, %x, %x, %x, %x, %x, %x\n",a,b,c,d,e,f,g,h);
 	Shutdown();
 }
@@ -79,7 +79,7 @@ void IRQHandler( void )
 			set32( HW_GPIO_ENABLE, GPIO_POWER );
 			set32( HW_GPIO_OUT, GPIO_POWER );
 
-			Shutdown();
+			while(1);
 		}
 	}
 
