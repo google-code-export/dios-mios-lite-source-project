@@ -43,7 +43,7 @@ void PrefetchAbort( void )
 {
 	EXIControl(1);
 	dbgprintf("PrefetchAbort\n");
-	while(1);
+	Shutdown();
 }
 void DataAbort( u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h )
 {
