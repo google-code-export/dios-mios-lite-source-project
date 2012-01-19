@@ -56,7 +56,7 @@
 extern void DRAMCTRLWrite( u32 Register, u32 Value );
 extern u32 DRAMCTRLRead( u32 Register );
 
-void EHCIInit( void );
+//void EHCIInit( void );
 
 void EXIControl( u32 value );
 
@@ -65,8 +65,8 @@ void MIOSInit( void );
 void MEMInitLow( void );
 void BootPPC( void );
 void UNKInit( u32 A, u32 B );
-void DRAMInit( u32 A, u32 B );
-void ChangeClock( void );
+//void DRAMInit( u32 A, u32 B );
+//void ChangeClock( void );
 void PPCReset( void );
 void HWResetDisable( void );
 void HWResetEnable( void );
@@ -77,11 +77,11 @@ void GetRevision( u32 *Version, u32 *Revision );
 
 void HWMAgic( u32 R0, u32 R1, u32 R2, u32 R3 );
 
-u32 DRAMRead( u32 ValueA );
+//u32 DRAMRead( u32 ValueA );
 void DRAMWrite( u32 ValueA, u32 ValueB );
 
-u32 RegRead( u32 Register );
-void RegWrite( u32 Register, u32 Value );
+//u32 RegRead( u32 Register );
+//void RegWrite( u32 Register, u32 Value );
 void HWRegWriteBatch( u32 A, u32 B, u32 C, u32 D, u32 delay );
 
 void Shutdown( void );

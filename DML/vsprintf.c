@@ -389,7 +389,7 @@ int dbgprintf( const char *fmt, ...)
 		{
 			write32( 0x0D800070, 1 );
 #ifndef debugprintfSD
-			dbgprintf("f_open():%d\n", fres );
+			dbgprintf("f_open('/dm.log') ret:%d\n", fres );
 #endif			
 			return 0;
 		}

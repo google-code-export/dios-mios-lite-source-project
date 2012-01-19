@@ -51,6 +51,7 @@ void HWRegWriteBatch( u32 A, u32 B, u32 C, u32 D, u32 delay )
 //	DRAMRead( 0x0163 );
 //	return DRAMRead( 0x0162 );
 //}
+/*
 void SomeFuncA( void )
 {
 	set32( 0xD80018C, 0x400 );
@@ -133,6 +134,7 @@ void EHCIInit( void )
 	
 	return;
 }
+*/
 void Shutdown( void )
 {
 	udelay(10);
@@ -170,6 +172,7 @@ void HW_184_2( void )
 {
 	set32( 0xD800184, 0x438E );
 }
+/*
 void ChangeClock( void )
 {
 	write32( HW_CLOCKS, 1 );
@@ -184,10 +187,13 @@ void ChangeClock( void )
 	write32( HW_CLOCKS, 2 );
 	udelay(1);
 }
+*/
 
-#define RAMTEST {write32( 0x13020000, 0xdeadbeaf); if( read32( 0x13020000 ) != 0xdeadbeaf ){ dbgprintf("Fail at:%d\n", __LINE__ );/*Shutdown();*/}}
+//#define RAMTEST {write32( 0x13020000, 0xdeadbeaf); if( read32( 0x13020000 ) != 0xdeadbeaf ){ dbgprintf("Fail at:%d\n", __LINE__ );/*Shutdown();*/}}
+
 
 u32 SP[3];
+/*
 void DRAMInit( u32 A, u32 B )
 {	
 	SP[0] = 0;
@@ -515,6 +521,8 @@ void HWMAgic( u32 R0, u32 R1, u32 R2, u32 R3 )
 	DRAMWrite( 0x165, 0x2B );
 	DRAMWrite( 0x164, r4 );	
 }
+
+*/
 void MIOSInit( void )
 {
 	ahb_flush_from(1);
@@ -596,6 +604,7 @@ void MIOSUnkInit( void )
 	udelay(2);
 
 }
+/*
 void MIOSEHCISub( void )
 {
 	u32 v = read32( 0xD8001D8 ) & 0x7FFFFFFF;
@@ -711,6 +720,7 @@ void MIOSEHCIInit2( void )
 //	dbgprintf("Unsupported CPU version!\n");
 	
 }
+*/
 void MIOSHWInit( u32 A, u32 B )
 {
 	GetRevision( SP+1, SP );
@@ -843,6 +853,7 @@ void BootPPC( void )
 	val = read32(HW_EXICTRL);
 }
 extern u8 *RAM;
+/*
 void MEM2Switch( u32 A )
 {
 	clear32( HW_RESETS, 0x48000 );
@@ -885,6 +896,7 @@ void MEM2Switch( u32 A )
 
 	
 }
+*/
 void MEMInitLow( void )
 {
 	write32( 0x3118, 0x04000000 );
@@ -1032,7 +1044,7 @@ void MEMInitLow( void )
 
 	val |= 0x00000040;
 	val &= 0xFFDFFFFF;
-	val |= 0x00200000;
+	//val |= 0x00200000;		// Enable DVD-R access by NOT setting this bit
 	val &= 0xFFBFFFFF;
 	val |= 0x00400000;
 	val &= 0xFFFFEFFF;

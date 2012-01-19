@@ -208,12 +208,65 @@ void check_MIOS_patches()
 	}
 }
 
+bool load_ppc_dol(void *dolstart)
+{
+	u32 i;
+	dolhdr *dolfile;
+
+	if (dolstart)
+	{
+		dolfile = (dolhdr *) dolstart;
+
+		for (i = 0; i < 7; i++)
+		{
+			dolfile->addressText[i] &= ~0x80000000;
+			if ((!dolfile->sizeText[i]) || (dolfile->addressText[i] < 0x100))
+				continue;
+			
+			dc_invalidaterange((void *) dolfile->addressText[i], dolfile->sizeText[i]);
+			memcpy ((void *) dolfile->addressText[i], dolstart+dolfile->offsetText[i], dolfile->sizeText[i]);
+			dc_flushrange((void *) dolfile->addressText[i], dolfile->sizeText[i]);
+		}
+
+		for(i = 0; i < 11; i++)
+		{
+			dolfile->addressData[i] &= ~0x80000000;
+			if ((!dolfile->sizeData[i]) || (dolfile->addressData[i] < 0x100))
+				continue;
+
+			dc_invalidaterange((void*) dolfile->addressData[i], dolfile->sizeData[i]);
+			memcpy ((void*) dolfile->addressData[i], dolstart+dolfile->offsetData[i], dolfile->sizeData[i]);
+			dc_flushrange((void*) dolfile->addressData[i], dolfile->sizeData[i]);
+		}
+
+		dolfile->addressBSS &= ~0x80000000;
+		if (dolfile->addressBSS != 0 && dolfile->sizeBSS != 0)
+		{
+			// Clear BSS area
+			dc_invalidaterange((void *) dolfile->addressBSS, dolfile->sizeBSS);
+			memset32((void *) dolfile->addressBSS, 0, dolfile->sizeBSS);
+			dc_flushrange((void *) dolfile->addressBSS, dolfile->sizeBSS);
+		}
+
+		// Overwrite the ppc entrypoint with the one from the .dol
+		*(u32 *) 0x000037fc = dolfile->entrypoint;
+		dc_flushrange((void *) 0x00003700, 0x100);
+
+		ic_invalidateall();
+		
+		return true;
+	}
+	return false;
+}
 
 
 
 int main( int argc, char *argv[] )
 {
-	bool boot_retail_disc = false;
+	bool boot_gamecube_disc = false;
+	FATFS fatfs;
+	s32 fres=0;
+
 	udelay(800);
 
 /*	The BC replacement code is not required when executing the actual BC
@@ -260,8 +313,20 @@ int main( int argc, char *argv[] )
 	
 	dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
 	
+	if (strncmp((char *) 0x007FFFE0, "gchomebrew dol", 32) == 0)		// Load GC homebrew
+	{
+		boot_gamecube_disc = true;
+		if (load_ppc_dol((void *)0x00800000))	// Copy the .dol and overwrite the ppc entrypoint
+		{
+			dbgprintf("Found gamecube homebrew...\n");
+		} else
+		{
+			dbgprintf("Gamecube homebrew error...\n");
+		}
+	}
+
 	dbgprintf("MEMInitLow()...\n");
-	MEMInitLow();
+	MEMInitLow();		// This already executes EXIControl(0), so dbgprintf from here till f_mount(0, &fatfs) won't work
 
 	//EHCIInit();
 	//dbgprintf("EHCIInit()\n");
@@ -271,14 +336,16 @@ int main( int argc, char *argv[] )
 	HeapInit();
 	//dbgprintf("HeapInit()\n");
 
-	FATFS fatfs;
-	s32 fres=0;
-		
 	sdhc_init();
 
 	//dbgprintf("f_mount()");
 	fres = f_mount(0, &fatfs );
 	//dbgprintf(":%d\n", fres );
+	if (fres != FR_OK)
+	{
+		dbgprintf("Error: Could not mount fatfs, ret: %d\n", fres);
+		boot_gamecube_disc = true;
+	}
 	
 	//DVDReadConfig();
 
@@ -308,12 +375,13 @@ int main( int argc, char *argv[] )
 		dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
 	}
 	
-	if (DVDSelectGame() < 0)
+	if (!boot_gamecube_disc)
 	{
-		boot_retail_disc = true;
-	}
-
-	check_MIOS_patches();
+		if (DVDSelectGame() < 0)
+		{
+			boot_gamecube_disc = true;
+		}
+	}	
 
 	CardInit();
 		
@@ -321,15 +389,19 @@ int main( int argc, char *argv[] )
 
 	DIInit();
 	
-	if (!boot_retail_disc)
+	if (!boot_gamecube_disc)
 	{
+		check_MIOS_patches();
 		PatchGCIPL();
 	}
 
 #if defined(debugprintf) && !defined(debugprintfSD)
 	dbgprintf("Switching exi control to ppc. DML's debug output will be logged to sd:/dm.log\n");
 #ifdef fwrite_patch
-	dbgprintf("The games' fwrite output will still be logged via usb gecko\n");
+	if (!boot_gamecube_disc)
+	{
+		dbgprintf("The games' fwrite output will still be logged via usb gecko\n");
+	}
 #endif
 #endif
 
@@ -340,9 +412,13 @@ int main( int argc, char *argv[] )
 
 	ahb_flush_to( AHB_PPC );
 
-	dbgprintf("\n\nDML main loop start\n");
+	if (!boot_gamecube_disc)
+	{
+		// If mounting the sd card failed, then any dbgprintf after EXIControl(0) will cause problems.
+		dbgprintf("\n\nDML main loop start\n");
+	}
 
-	if (boot_retail_disc)
+	if (boot_gamecube_disc)
 	{
 		while (1);
 	} else
