@@ -5,7 +5,7 @@
 #ifndef _ALLOC_
 #define _ALLOC_
 
-#define _AHEAP_SIZE_TOTAL	0x8000
+#define _AHEAP_SIZE_TOTAL 0x4000
 #define _AHEAP_INFO_SIZE	0x0100
 #define _AHEAP_SIZE		_AHEAP_SIZE_TOTAL-_AHEAP_INFO_SIZE
 

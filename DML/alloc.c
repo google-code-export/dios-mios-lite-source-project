@@ -9,7 +9,7 @@ extern void DRAMWrite( u32 a, u32 b );
 
 void HeapInit( void )
 {
-	RAM = (u8*)0x080A0000;
+	RAM = (u8*)0xFFFE4000;
 	HeapInfoEntries = (HeapInfoEntry*)(RAM+_AHEAP_SIZE);
 	memset32( HeapInfoEntries, 0, _AHEAP_INFO_SIZE );
 

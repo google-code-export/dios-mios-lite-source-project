@@ -286,17 +286,22 @@ void DIUpdateRegisters( void )
 							switch( read32( 0 ) & 0xFF )
 							{
 								default:
-								case 'E':
-								case 'J':
+								case 'E':	// NTSC-U
+								case 'J':	// NTSC-J
 								{
 									write32( 0xCC, 0 );
 								} break;
-								case 'P':
+								case 'P':	// PAL
 								{
 									if( SRAM_GetVideoMode() & GCVideoModePROG )
 										write32( 0xCC, 0 );
 									else
-										write32( 0xCC, 5 );
+									{
+										if (old_video_mode == 0)	// Only overwrite this if the video mode is not PAL already
+										{
+											write32( 0xCC, 5 );
+										}
+									}
 								} break;
 							}
 							if (read32(0xCC) != old_video_mode)

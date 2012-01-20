@@ -818,7 +818,13 @@ SPatches:
 		{
 			case 0xdead0000:
 			{
-				write32( PC.Offset + 0x54 + 16, read32( PC.Offset + 0x54 + 4 ) + (1<<21) );
+				if ((read32( 0 ) & 0xFF) == 'P' && (SRAM_GetVideoMode()) == 1)
+				{
+					dbgprintf("Skipping VIInit patch, SRAM set to PAL, game is PAL and progressive mode is not enabled\n");
+				} else
+				{
+					write32( PC.Offset + 0x54 + 16, read32( PC.Offset + 0x54 + 4 ) + (1<<21) );
+				}
 			} break;
 			case 0xdead0001:
 			{

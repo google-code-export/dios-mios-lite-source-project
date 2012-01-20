@@ -72,7 +72,7 @@ clearbss_end:
 	msr     CPSR_c, #219
 	ldr     sp, =0xFFFF7E60
 	msr     CPSR_c, #31
-	ldr     sp, =0xFFFFF000
+	ldr		sp, =0xFFFE4000
 	
 #enable IRQs
 

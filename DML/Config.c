@@ -37,6 +37,7 @@ void SRAM_Write( void *sram )
 void SRAM_Init( void )
 {
 	SRAM_Read(SRAM);
+	//dbgprintf("SRAM:\n");
 	//hexdump( SRAM, 64 );
 }
 void SRAM_SetVideoMode( u8 VideoMode )

@@ -2,18 +2,18 @@ OUTPUT_FORMAT("elf32-bigarm")
 OUTPUT_ARCH(arm)
 ENTRY(_start)
 
-__stack_size = 0x0FF0;
+__stack_size = 0x4000;
 
 MEMORY
 {
-	sram		: ORIGIN = 0xFFFF0000,	LENGTH = 0xEfff
-	stack		: ORIGIN = 0xFFFFF000,	LENGTH = 0x0fff
+	sram 		: ORIGIN = 0xFFFF0000, LENGTH = 0x10000
+	stack 		: ORIGIN = 0xFFFE0000, LENGTH = 0x4000
 }
 
 PHDRS
 {
 	sram PT_LOAD AT ( 0xFFFF0000 ) ;
-	stack PT_LOAD AT ( 0xFFFFF000 ) ;
+	stack PT_LOAD AT ( 0xFFFE0000 ) ;
 }
 
 SECTIONS
