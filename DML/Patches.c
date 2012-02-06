@@ -67,20 +67,10 @@ unsigned char OSReportDM[] =
 
 FuncPattern FPatterns[] =
 {
-	//{ 0xBC,			20,     3,      3,      4,      7,	DVDReadAsync,			sizeof(DVDReadAsync),			"DVDReadAsync",					0,		0 },
-	//{ 0x114,        23,     2,      6,      9,      8,	DVDRead,				sizeof(DVDRead),				"DVDRead",						0,		0 },
-	//{ 0xD8,			17,     12,     5,      3,      2,	DVDReadAbsAsyncPrioAsync,		sizeof(DVDReadAbsAsyncPrioAsync),	"DVDReadAbsAsyncPrio",			0,		0 },
-	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio FC",			3,		0 },
-	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,				0xdead0006,						"DVDReadAbsAsyncPrio D8",			3,		0 },
-
-	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
-	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
-	//{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",			0,		0 },
-	//{ 0xC0,			15,     9,      5,      3,      2,	DVDPrepareStreamAbsAsync,	sizeof(DVDPrepareStreamAbsAsync),"DVDPrepareStreamAbsAsync",	0,		0 },
-	//{ 0xB8,			15,     7,      5,      3,      2,	(u8*)NULL,					0xdead0010,						"DVDStream*",					0,		0 },
-
-	//{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,		sizeof(__DVDInterruptHandler),	"__DVDInterruptHandler",		2,		0 },
-	//{ 0x2F0,        60,     27,     9,      21,     17, __DVDInterruptHandler,		sizeof(__DVDInterruptHandler),	"__DVDInterruptHandler",		2,		0 },
+	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
+	{ 0x5D0,        158,    41,     21,     52,     6,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
+	{ 0x654,        167,    41,     22,     60,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
+	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
@@ -120,43 +110,46 @@ FuncPattern LPatterns[] =
 #endif
 };
 
+#ifdef CARDMODE
+
 FuncPattern CPatterns[] =
 {
 	{ 0x14C,        28,     12,     7,      12,     4,	CARDFreeBlocks,		sizeof(CARDFreeBlocks),	"CARDFreeBlocks A",		1,		0 },
-	//{ 0x11C,        24,     10,     7,      10,     4,	CARDFreeBlocks,		sizeof(CARDFreeBlocks),	"CARDFreeBlocks B",		1,		0 },
-	//{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			sizeof(__CARDSync),		"__CARDSync",			0,		0 },
-	//{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			sizeof(CARDCheck),		"CARDCheck",			0,		0 },
-	////{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		sizeof(CARDCheckAsync),	"CARDCheckAsync",	0,		0 },
-	//{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckEX,		sizeof(CARDCheckEX),	"CARDCheckExAsync",		0,		0 },
-	//{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			sizeof(CARDProbe),		"CARDProbe",			2,		0 },
-	////{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			sizeof(CARDProbe),		"CARDProbe B",			2,		0 },	//This is causing more trouble than a hack...
-	//{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx A",		3,		0 },
-	//{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx B",		3,		0 },
-	//{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx C",		3,		0 },
-	//{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		sizeof(CARDMountAsync),	"CARDMountAsync A",		4,		0 },
-	//{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		sizeof(CARDMountAsync),	"CARDMountAsync B",		4,		0 },	
-	//{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen A",			5,		0 },
-	//{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen B",			5,		0 },
-	//{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen C",			5,		0 },	
-	//{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		sizeof(CARDFastOpen),	"CARDFastOpen",			0,		0 },
-	//{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			sizeof(CARDClose),		"CARDClose",			0,		0 },
-	//{ 0x21C,        44,     6,      13,     19,     12,	CARDCreate,			sizeof(CARDCreate),		"CARDCreateAsync A",	6,		0 },
-	//{ 0x214,        42,     6,      13,     19,     12,	CARDCreate,			sizeof(CARDCreate),		"CARDCreateAsync B",	6,		0 },	
-	//{ 0x10C,        25,     6,      9,      9,      5,	CARDDelete,			sizeof(CARDDelete),		"CARDDeleteAsync",		0,		0 },
-	//{ 0x144,        27,     3,      8,      10,     9,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync A",		7,		0 },
-	//{ 0x140,        30,     7,      7,      10,     10,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync B",		7,		0 },
-	//{ 0x140,        27,     3,      8,      10,     9,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync C",		7,		0 },	
-	//{ 0x110,        24,     4,      8,      9,      6,	CARDWrite,			sizeof(CARDWrite),		"CARDWriteAsync A",		8,		0 },
-	//{ 0x10C,        23,     4,      8,      9,      6,	CARDWrite,			sizeof(CARDWrite),		"CARDWriteAsync B",		8,		0 },	
-	//{ 0x128,        25,     9,      9,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus A",		9,		0 },
-	//{ 0x110,        25,     9,      8,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus B",		9,		0 },
-	//{ 0x124,        25,     9,      9,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus C",		9,		0 },	
-	//{ 0x170,        29,     9,      9,      12,     5,	CARDSetStats,		sizeof(CARDSetStats),	"CARDSetStatusAsync A",	10,		0 },
-	//{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStats,		sizeof(CARDSetStats),	"CARDSetStatusAsync B",	10,		0 },	
-	//{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	sizeof(CARDGetSerialNo),"CARDGetSerialNo",		0,		0 },
-	//{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	sizeof(CARDGetEncoding),"CARDGetEncoding",		0,		0 },
-	//{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		sizeof(CARDGetMemSize),	"CARDGetMemSize",		0,		0 },
+	{ 0x11C,        24,     10,     7,      10,     4,	CARDFreeBlocks,		sizeof(CARDFreeBlocks),	"CARDFreeBlocks B",		1,		0 },
+	{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			sizeof(__CARDSync),		"__CARDSync",			0,		0 },
+	{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			sizeof(CARDCheck),		"CARDCheck",			0,		0 },
+	//{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		sizeof(CARDCheckAsync),	"CARDCheckAsync",	0,		0 },
+	{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckEX,		sizeof(CARDCheckEX),	"CARDCheckExAsync",		0,		0 },
+	{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			sizeof(CARDProbe),		"CARDProbe",			2,		0 },
+	//{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			sizeof(CARDProbe),		"CARDProbe B",			2,		0 },	//This is causing more trouble than a hack...
+	{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx A",		3,		0 },
+	{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx B",		3,		0 },
+	{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		sizeof(CARDProbeEX),	"CARDProbeEx C",		3,		0 },
+	{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		sizeof(CARDMountAsync),	"CARDMountAsync A",		4,		0 },
+	{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		sizeof(CARDMountAsync),	"CARDMountAsync B",		4,		0 },	
+	{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen A",			5,		0 },
+	{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen B",			5,		0 },
+	{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			sizeof(CARDOpen),		"CARDOpen C",			5,		0 },	
+	{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		sizeof(CARDFastOpen),	"CARDFastOpen",			0,		0 },
+	{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			sizeof(CARDClose),		"CARDClose",			0,		0 },
+	{ 0x21C,        44,     6,      13,     19,     12,	CARDCreate,			sizeof(CARDCreate),		"CARDCreateAsync A",	6,		0 },
+	{ 0x214,        42,     6,      13,     19,     12,	CARDCreate,			sizeof(CARDCreate),		"CARDCreateAsync B",	6,		0 },	
+	{ 0x10C,        25,     6,      9,      9,      5,	CARDDelete,			sizeof(CARDDelete),		"CARDDeleteAsync",		0,		0 },
+	{ 0x144,        27,     3,      8,      10,     9,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync A",		7,		0 },
+	{ 0x140,        30,     7,      7,      10,     10,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync B",		7,		0 },
+	{ 0x140,        27,     3,      8,      10,     9,	CARDRead,			sizeof(CARDRead),		"CARDReadAsync C",		7,		0 },	
+	{ 0x110,        24,     4,      8,      9,      6,	CARDWrite,			sizeof(CARDWrite),		"CARDWriteAsync A",		8,		0 },
+	{ 0x10C,        23,     4,      8,      9,      6,	CARDWrite,			sizeof(CARDWrite),		"CARDWriteAsync B",		8,		0 },	
+	{ 0x128,        25,     9,      9,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus A",		9,		0 },
+	{ 0x110,        25,     9,      8,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus B",		9,		0 },
+	{ 0x124,        25,     9,      9,      6,      5,	CARDGetStats,		sizeof(CARDGetStats),	"CARDGetStatus C",		9,		0 },	
+	{ 0x170,        29,     9,      9,      12,     5,	CARDSetStats,		sizeof(CARDSetStats),	"CARDSetStatusAsync A",	10,		0 },
+	{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStats,		sizeof(CARDSetStats),	"CARDSetStatusAsync B",	10,		0 },	
+	{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	sizeof(CARDGetSerialNo),"CARDGetSerialNo",		0,		0 },
+	{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	sizeof(CARDGetEncoding),"CARDGetEncoding",		0,		0 },
+	{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		sizeof(CARDGetMemSize),	"CARDGetMemSize",		0,		0 },
 };
+#endif
 
 u32 CardLowestOff = 0;
 
@@ -396,6 +389,121 @@ bool compare_Pattern( FuncPattern *FP1, FuncPattern *FP2 )
 		return false;
 }
 
+void MPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
+{
+	u32 i;
+
+	memset( FunctionPattern, 0, sizeof(FuncPattern) );
+
+	for( i = 0; i < Length; i+=4 )
+	{
+		u32 word = read32( (u32)Data + i );
+		
+		if( (word & 0xFC000003) ==  0x48000001 )
+			FunctionPattern->FCalls++;
+
+		if( (word & 0xFC000003) ==  0x48000000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40810000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41820000 )
+			FunctionPattern->Branch++;
+		
+		if( (word & 0xFC000000) ==  0x80000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x38000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x3C000000 )
+			FunctionPattern->Loads++;
+		
+		if( (word & 0xFC000000) ==  0x90000000 )
+			FunctionPattern->Stores++;
+		if( (word & 0xFC000000) ==  0x94000000 )
+			FunctionPattern->Stores++;
+
+		if( (word & 0xFF000000) ==  0x7C000000 )
+			FunctionPattern->Moves++;
+
+		if( word == 0x4E800020 )
+			break;
+	}
+
+	FunctionPattern->Length = i;
+}
+bool CPattern( FuncPattern *FPatA, FuncPattern *FPatB  )
+{
+	if( memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0 )
+		return true;
+	else
+		return false;
+}
+bool FPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
+{
+	u32 i;
+	FuncPattern FP;
+
+	memset( &FP, 0, sizeof(FP) );
+
+	for( i = 0; i < Length; i+=4 )
+	{
+		u32 word =  read32( (u32)Data + i );
+		
+		if( (word & 0xFC000003) ==  0x48000001 )
+			FP.FCalls++;
+
+		if( (word & 0xFC000003) ==  0x48000000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x40800000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x41800000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x40810000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x41820000 )
+			FP.Branch++;
+		
+		if( (word & 0xFC000000) ==  0x80000000 )
+			FP.Loads++;
+		if( (word & 0xFF000000) ==  0x38000000 )
+			FP.Loads++;
+		if( (word & 0xFF000000) ==  0x3C000000 )
+			FP.Loads++;
+		
+		if( (word & 0xFC000000) ==  0x90000000 )
+			FP.Stores++;
+		if( (word & 0xFC000000) ==  0x94000000 )
+			FP.Stores++;
+
+		if( (word & 0xFF000000) ==  0x7C000000 )
+			FP.Moves++;
+
+		if( word == 0x4E800020 )
+			break;
+	}
+
+	FP.Length = i;
+
+	//if( (u32)Data == 0x336E08 )
+	//{
+	//	dbgprintf("Length: 0x%02X\n", FP.Length );
+	//	dbgprintf("Loads : %d\n", FP.Loads );
+	//	dbgprintf("Stores: %d\n", FP.Stores );
+	//	dbgprintf("FCalls: %d\n", FP.FCalls );
+	//	dbgprintf("Branch: %d\n", FP.Branch );
+	//	dbgprintf("Moves : %d\n", FP.Moves );
+	//	dbgprintf("Res   : %d\n", memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) );	
+	//}
+
+	if( memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) == 0 )
+		return true;
+	else
+		return false;
+}
+#ifdef CARDMODE
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i,j,k,offset,fail,FoundCardFuncStart=0;
@@ -553,6 +661,7 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 
 	dbgprintf("Patches applied\n\n");
 }
+#endif
 void DoPatchesLoader( char *ptr, u32 size )
 {
 	u32 i=0,j=0,k=0;
@@ -625,11 +734,8 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 	u32 magicword;
 	FIL PCache;
 	u32 i=0,j=0,k=0,read;
-	//u32 offset=0;
 	FuncPattern temp_FP;
 	
-	//u32 __DVDIHOffset	= 0;
-	//u32 DVDLROffset		= 0;
 	PatchCache PC;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
@@ -638,6 +744,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 
 //Hacks and other stuff
 
+#ifdef CARDMODE
 	//Eternal Darkness MemcardReport
 	if( read32(0) == 0x47454450 )
 	{
@@ -646,6 +753,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 		newval|= 0x48000000;
 		write32( 0x0170414, newval );
 	}
+#endif
 
 //Note: ORing the values prevents an early break out when a single patterns has multiple hits
 
@@ -717,14 +825,14 @@ SPatches:
 		f_write( &PCache, &magicword, 4, &read );
 
 		memset( &PC, 0, sizeof( PatchCache ) );
-
-		//DoCardPatches( ptr, size, SectionOffset );
+#ifdef CARDMODE
+		DoCardPatches( ptr, size, SectionOffset );
 		
-		//PC.Offset  = CardLowestOff;
-		//PC.PatchID = 0xdead0002;
+		PC.Offset  = CardLowestOff;
+		PC.PatchID = 0xdead0002;
 
-		//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
-		
+		f_write( &PCache, &PC, sizeof( PatchCache ), &read );
+#endif
 		if (find_dvd_read((u32)ptr, size, &PC.Offset))
 		{
 			PC.PatchID = 0xdead0005;
@@ -732,6 +840,155 @@ SPatches:
 		} else		
 		{
 			dbgprintf("Patch:Critical Error [DVDLowRead] not found\n");
+		}
+
+		u32 PatchCount=0;
+		
+		for( i=0; i < size; i+=4 )
+		{
+			if( (PatchCount & 1) == 0 )
+			if( read32( (u32)ptr + i ) == 0x3C60A800 ) 
+			{
+				int j=0;
+				while( read32( (u32)ptr + i - j ) != 0x7C0802A6 )
+					j+=4;
+
+				//Check if there is a lis %rX, 0xCC00 in this function
+				//At least Sunshine has one false hit on lis r3,0xA800
+				int k=0;
+				while( 1 )
+				{
+					if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
+						break;
+					if( (read32( (u32)ptr + i + k - j ) & 0xF81FFFFF) == 0x3800CC00 )
+					{
+						write32( (u32)ptr + i + k - j, (read32((u32)ptr + i + k - j) & 0xFFFF0000) | 0xC000 );
+						break;
+					}
+
+					k += 4;
+				}
+			
+				if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
+				{
+					//dbgprintf("Patch:No 0xCC00 found around:%08X\n", (u32)ptr+i);
+					continue;
+				}
+
+				//Search addi 0x6000
+				while( 1 )
+				{
+					if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
+						break;
+					if( (read32( (u32)ptr + i + k - j ) & 0xFFFF) == 0x6000 )
+					{
+						write32( (u32)ptr + i + k - j, (read32((u32)ptr + i + k - j) & 0xFFFF0000) | 0x2F00 );
+						break;
+					}
+
+					k += 4;
+					
+				}
+
+				if( read32( (u32)ptr + i + k - j ) == 0x4E800020 )
+				{
+					//dbgprintf("Patch:No 0xCC00 found around:%08X\n", (u32)ptr+i);
+					continue;
+				}
+
+				write32( (u32)ptr + i, 0x3C60A700 );
+				
+				PC.Offset  = (u32)ptr + i - j;
+				PC.PatchID = 0xdead0005;
+				
+				dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", PC.Offset + SectionOffset );
+
+				//f_write( &PCache, &PC, sizeof( PatchCache ), &read );
+				PatchCount |= 1;
+			}
+
+			if( (PatchCount & 2) == 0 )
+			if( read32( (u32)ptr + i )		== 0x5483077A &&
+				read32( (u32)ptr + i + 4 )	== 0x28030000 &&
+				read32( (u32)ptr + i + 8 )	== 0x41820008 &&
+				read32( (u32)ptr + i +12 )	== 0x64002000
+				) 
+			{
+				dbgprintf("Patch:Found [__OSDispatchInterrupt]: 0x%08X 0x%08X\n", (u32)ptr + i + 0, (u32)ptr + i + 0x1A8 );
+				
+				write32( (u32)ptr + i + 0,		(read32( (u32)ptr + i + 0 )	& 0xFFFF0000) | 0x0463 );
+				write32( (u32)ptr + i + 0x1A8,	(read32( (u32)ptr + i + 0x1A8 )	& 0xFFFF0000) | 0x0463 );
+
+				PatchCount |= 2;
+			}
+
+			if( (PatchCount & 4) == 0 )
+			if( read32( (u32)ptr + i )		== 0x5480056A &&
+				read32( (u32)ptr + i + 4 )	== 0x28000000 &&
+				read32( (u32)ptr + i + 8 )	== 0x40820008 &&
+				read32( (u32)ptr + i +12 )	== 0x60A50004
+				) 
+			{
+				dbgprintf("Patch:Found [SetInterruptMask]: 0x%08X\n", (u32)ptr + i + 12 );
+
+				write32( (u32)ptr + i + 12, (read32( (u32)ptr + i + 12 ) & 0xFFFF0000) | 0x4000 );
+
+				PatchCount |= 4;
+			}
+
+			if( (PatchCount & 8) == 0 )
+			if( (read32( (u32)ptr + i + 0 ) & 0xFFFF) == 0x6000 &&
+				(read32( (u32)ptr + i + 4 ) & 0xFFFF) == 0x002A &&
+				(read32( (u32)ptr + i + 8 ) & 0xFFFF) == 0x0054 
+				) 
+			{
+				u32 Offset = (u32)ptr + i - 8;
+
+				dbgprintf("Patch:Found [__DVDIntrruptHandler]: 0x%08X\n", Offset );
+				
+				u32 value = *(vu32*)Offset;
+					value&= 0xFFFF0000;
+					value|= 0x0000C000;
+				*(vu32*)Offset = value;
+
+				Offset += 8;
+
+					value = *(vu32*)Offset;
+					value&= 0xFFFF0000;
+					value|= 0x0002F30;
+				*(vu32*)Offset = value;
+				
+				Offset += 20;
+				
+				dbgprintf("Patch:[__DVDInterruptHandler] %08X\n", Offset );
+				*(vu32*)Offset = 0x3D00CD00; Offset += 4;
+				*(vu32*)Offset = 0x38000034; Offset += 4;
+				*(vu32*)Offset = 0x90080004; Offset +=16;
+
+				dbgprintf("Patch:[__DVDInterruptHandler] %08X\n", Offset );
+				*(vu32*)Offset = 0x3D00CD00; Offset += 4;
+				*(vu32*)Offset = 0x3C004000; Offset += 4;
+				*(vu32*)Offset = 0x90080030; Offset +=32;
+
+				dbgprintf("Patch:[__DVDInterruptHandler] %08X\n", Offset );
+				
+					value = *(vu32*)Offset;
+					value&= 0xFFFF0000;
+					value|= 0x0000C000;
+				*(vu32*)Offset = value;
+
+				Offset += 4;
+
+					value = *(vu32*)Offset;
+					value&= 0xFFFF0000;
+					value|= 0x0002F08;
+				*(vu32*)Offset = value;
+
+				PatchCount |= 8;
+			}
+
+			if( PatchCount == 15 )
+				break;
 		}
 		
 		for( i=0; i < size; i+=4 )
@@ -741,14 +998,15 @@ SPatches:
 
 			i+=4;
 
-			create_Pattern((u8*)(ptr+i), size, &temp_FP);
+			FuncPattern fp;
+			MPattern( (u8*)(ptr+i), size, &fp );
 
 			for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
 			{
 				if( FPatterns[j].Found ) //Skip already found patches
 					continue;
 				
-				if( compare_Pattern( &temp_FP, &(FPatterns[j]) ) )
+				if( CPattern( &fp, &(FPatterns[j]) ) )
 				{
 					dbgprintf("Patch:Found [%s]: 0x%08X\n", FPatterns[j].Name, (u32)ptr + i + SectionOffset );
 					
@@ -839,16 +1097,20 @@ SPatches:
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000000;
 				write32( PC.Offset, newval );
+
+				memcpy( (void*)0x1800, (void*)0, 6 );	//TitleID for WiiRD
 #endif
 			} break;
 			case 0xdead0002:
 			{
+#ifdef CARDMODE
 				//Don't call it again
 				if( CardLowestOff == 0 )
 				{
 					CardLowestOff = 0xdeadbeef;
 					//DoCardPatches( ptr+PC.Offset, size, SectionOffset );					
 				}
+#endif
 			} break;
 			/*	This should not be required anymore
 			case 0xdead0004:	// Audiostreaming hack
@@ -873,6 +1135,23 @@ SPatches:
 			{				
 				patch_DVDReadAbsAsyncPrio(PC.Offset);
 			} break;
+			case 0xdead000A:	//	cbForStateBusy
+			{
+				//Find lis 0xcc00
+
+				j=0;
+				while(1)
+				{
+					if( read32( PC.Offset + j ) == 0x3C80CC00 )
+						break;
+					j+=4;
+				}
+				
+				dbgprintf("Patch:[cbForStateBusy] %08X\n", PC.Offset + j );
+				write32( PC.Offset + j, 0x3C80C000 ); j+=4;
+				write32( PC.Offset + j, 0x38842F30 ); j+=4;
+
+			} break;	
 			//case 0xdead0010:
 			//{
 			//	switch( read32(PC.Offset + 8) & 0xF )
@@ -936,6 +1215,10 @@ SPatches:
 			//} break;
 			default:
 			{
+#ifdef CHEATHOOK
+				if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
+					break;
+#endif
 				memcpy( (void*)(PC.Offset), FPatterns[PC.PatchID].Patch, FPatterns[PC.PatchID].PatchLength );
 				
 				if ((FPatterns[PC.PatchID].Patch == (u8 *)__dvdLowAudioStatusNULL) && ((read32(0) >> 8) == 0x47494B))
@@ -944,8 +1227,7 @@ SPatches:
 					dbgprintf("Patch:LowAudioStatus patched for Ikaruga\n");
 				}
 			} break;
-		}
-		
+		}		
 	}
 
 //Write PatchCache to file

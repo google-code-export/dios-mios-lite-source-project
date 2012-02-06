@@ -2,7 +2,7 @@
 
 DIOS MIOS Lite - Gamecube SD loader for Nintendo Wii
 
-Copyright (C) 2010-2011  crediar
+Copyright (C) 2010-2012  crediar
 
 */
 #include "string.h"
@@ -20,12 +20,8 @@ Copyright (C) 2010-2011  crediar
 #include "sdhc.h"
 #include "DVD.h"
 #include "Drive.h"
-
-#ifdef TRIFORCE
-#include "tri.h"
-#else
 #include "dip.h"
-#endif
+
 
 char __aeabi_unwind_cpp_pr0[0];
 
@@ -82,6 +78,10 @@ void IRQHandler( void )
 			while(1);
 		}
 	}
+
+	//Clear IRQ Flags
+	write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+	write32( HW_GPIO_INTFLAG, read32(HW_GPIO_INTFLAG) );
 
 	return;
 }
@@ -311,7 +311,7 @@ int main( int argc, char *argv[] )
 	dbgprintf("This software is licensed under GPLv3, for more details visit: http://code.google.com/p/dios-mios-lite-source-project\n");
 #endif
 	
-	dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
+	//dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
 	
 	if (strncmp((char *) 0x007FFFE0, "gchomebrew dol", 32) == 0)		// Load GC homebrew
 	{
@@ -325,7 +325,7 @@ int main( int argc, char *argv[] )
 		}
 	}
 
-	dbgprintf("MEMInitLow()...\n");
+	//dbgprintf("MEMInitLow()...\n");
 	MEMInitLow();		// This already executes EXIControl(0), so dbgprintf from here till f_mount(0, &fatfs) won't work
 
 	//EHCIInit();
@@ -382,8 +382,9 @@ int main( int argc, char *argv[] )
 			boot_gamecube_disc = true;
 		}
 	}	
-
+#ifdef CARDMODE
 	CardInit();
+#endif
 		
 	clear32( HW_EXICTRL, 0 );
 
@@ -394,6 +395,11 @@ int main( int argc, char *argv[] )
 		check_MIOS_patches();
 		PatchGCIPL();
 	}
+	
+	write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+	write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+	
+	set32( HW_PPCIRQMASK, (1<<31) );
 
 #if defined(debugprintf) && !defined(debugprintfSD)
 	dbgprintf("Switching exi control to ppc. DML's debug output will be logged to sd:/dm.log\n");
@@ -445,7 +451,9 @@ int main( int argc, char *argv[] )
 			}
 
 			DIUpdateRegisters();
-			//CARDUpdateRegisters();
+#ifdef CARDMODE
+			CARDUpdateRegisters();
+#endif
 			ahb_flush_to( AHB_PPC );	//flush to ppc
 		}
 	}

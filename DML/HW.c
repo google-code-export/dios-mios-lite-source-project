@@ -980,8 +980,6 @@ void MEMInitLow( void )
 	u32 val = read32( HW_DIFLAGS );
 
 	val &= ~0x01;
-	val &= ~0x02;
-	val &= ~0x04;
 	val &= ~0x08;
 
 	val |=  0x10;

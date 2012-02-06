@@ -69,7 +69,7 @@ void DIInit( void )
 void DIUpdateRegisters( void )
 {	
 	u32 read,i;
-	static u32 PatchState = 2;
+	static u32 PatchState = 0;
 	static u32 DOLReadSize= 0;
 	//static FEntry *FSTable;
 	//static u32 FSTEntries = 0;
@@ -223,91 +223,64 @@ void DIUpdateRegisters( void )
 					// Game is loading a new loader!
 					} else
 					*/
-					
-					if (PatchState == 1)
-					{
-						if (Buffer == 0x01300000)
-						{
-							dbgprintf("DIP:Game loading new .dol!\n");
-							DoPatchesLoader( (char*)(Buffer), Length );
-							PatchState = 2;
-						}
-					//Get the main.dol header read so we know once the dol is completly loaded so we can patch it
-					} else if (PatchState == 2)
-					{
-						//dbgprintf("DIP:DVDRead( 0x%08x, 0x%08x, 0x%08x )\n", Offset, Length, Buffer);
 
-						if ( Length == 256 && ((Buffer >> 20 ) == 0x12 || *(u32 *)Buffer == 0x00000100) )
+					if( (u32)Buffer == 0x01300000 )
+					{
+						DoPatchesLoader( (char*)(0x01300000), Length );
+					}
+
+					if( PatchState == 0 )
+					{
+						if( Length == 0x100 )
 						{
-							DOLOffset = Offset;
-							
-							//quickly calc the size
-							DOLSize = sizeof(dolhdr);
-							dolhdr *dol = (dolhdr*)Buffer;
-							
-							for( i=0; i < 7; ++i )
-								DOLSize += dol->sizeText[i];
-							for( i=0; i < 11; ++i )
-								DOLSize += dol->sizeData[i];
-							
-							DOLReadSize = sizeof(dolhdr);
-							
-							DOLMaxOff=0;
-							for( i=0; i < 7; ++i )
+							if( read32( (u32)Buffer ) == 0x100 )
 							{
-								if( dol->addressText[i] == 0 )
-									continue;
+								//quickly calc the size
+								DOLSize = sizeof(dolhdr);
+								dolhdr *dol = (dolhdr*)Buffer;
+						
+								for( i=0; i < 7; ++i )
+									DOLSize += dol->sizeText[i];
+								for( i=0; i < 11; ++i )
+									DOLSize += dol->sizeData[i];
+						
+								DOLReadSize = sizeof(dolhdr);
 
-								if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
-									DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
+								DOLMaxOff=0;
+								for( i=0; i < 7; ++i )
+								{
+									if( dol->addressText[i] == 0 )
+										continue;
+
+									if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
+										DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
+								}
+
+								DOLMaxOff -= 0x80003100; 
+
+								dbgprintf("DIP:DOLSize:%d DOLMaxOff:0x%08X\n", DOLSize, DOLMaxOff );
+
+								PatchState = 1;
 							}
-
-							DOLMaxOff -= 0x80003100; 
-
-							dbgprintf("DIP:DOLOffset:%d DOLSize:%d DOLMaxOff:0x%08X\n", DOLOffset, DOLSize, DOLMaxOff );
-							
-							PatchState = 3;
+						} else if( read32(Buffer) == 0x7F454C46 )
+						{
+							dbgprintf("DIP:Game is loading an .elf %u\n", Length );
 						}
-					} else if( PatchState == 3 )
+
+					} else if ( PatchState == 1 )
 					{
 						DOLReadSize += Length;
 						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
 						if( DOLReadSize == DOLSize )
 						{
-							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, DOLOffset );
-							PatchState = 1;
+							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 0 );
 #ifdef CODES
 							DIReadKenobiGC();
 							DIReadCodes();
 #endif
-							u32 old_video_mode = read32(0xCC);
-							dbgprintf("Current video mode(0xCC): %d\n", old_video_mode);
-							
-							switch( read32( 0 ) & 0xFF )
-							{
-								default:
-								case 'E':	// NTSC-U
-								case 'J':	// NTSC-J
-								{
-									write32( 0xCC, 0 );
-								} break;
-								case 'P':	// PAL
-								{
-									if( SRAM_GetVideoMode() & GCVideoModePROG )
-										write32( 0xCC, 0 );
-									else
-									{
-										if (old_video_mode == 0)	// Only overwrite this if the video mode is not PAL already
-										{
-											write32( 0xCC, 5 );
-										}
-									}
-								} break;
-							}
-							if (read32(0xCC) != old_video_mode)
-							{
-								dbgprintf("Video mode(0xCC) changed to: %d\n", read32(0xCC));
-							}
+							//Setting 0xCC is ignored by the PPC side, use SRAM to set the videomode.
+
+							PatchState = 0;
 						}
 					}
 										
@@ -317,19 +290,13 @@ void DIUpdateRegisters( void )
 					while( read32(DI_SCONTROL) & 1 )
 						clear32( DI_SCONTROL, 1 );
 
-					set32( DI_SSTATUS, 0x10 );
+					set32( DI_SSTATUS, 0x3A );
 
-				} break;
-				case 0xAB:
-				{
-					//u32 Offset = read32(DI_SCMD_1) << 2;
+					write32( 0x0d80000C, (1<<0) | (1<<4) );
+					write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+					write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+					set32( 0x0d80000C, (1<<1) | (1<<2) );
 
-					//dbgprintf("DIP:DVDSeek( 0x%08x )\n", Offset  );
-
-					while( read32(DI_SCONTROL) & 1 )
-						clear32( DI_SCONTROL, 1 );
-
-					set32( DI_SSTATUS, 0x10 );
 				} break;
 				default:
 				{

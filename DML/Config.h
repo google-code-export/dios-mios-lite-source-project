@@ -40,7 +40,7 @@ typedef struct GC_SRAM
 /* 0x08 */	u32 ead1;
 /* 0x0C */	u32 CounterBias;
 /* 0x10 */	u8	DisplayOffsetH;
-/* 0x11 */	u8	BootMode;
+/* 0x11 */	u8	BootMode;	// Also holds a PAL60 flag
 /* 0x12 */	u8	Language;
 /* 0x13 */	u8	Flags;
 		/*

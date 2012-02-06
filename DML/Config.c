@@ -43,14 +43,25 @@ void SRAM_Init( void )
 void SRAM_SetVideoMode( u8 VideoMode )
 {
 	GC_SRAM *sram = (GC_SRAM*)SRAM;
+	
+	sram->Flags		&= 0xFC;
+	sram->BootMode	&= 0xBF;
 
-	sram->Flags &= 0xFC;
-	sram->Flags |= VideoMode;
+	if( VideoMode == GCVideoModePAL60 )
+	{
+		sram->BootMode	|= 0x40;
+		sram->Flags		|= 0x01;
+
+	} else if( VideoMode == GCVideoModePROG )
+		sram->Flags |= GCVideoModePROG;
 }
 u8 SRAM_GetVideoMode( void )
 {
 	GC_SRAM *sram = (GC_SRAM*)SRAM;
-	
+
+	if( sram->BootMode & 0x40 )
+		return GCVideoModePAL60;
+
 	return sram->Flags & 3;
 }
 void SRAM_Flush( void )

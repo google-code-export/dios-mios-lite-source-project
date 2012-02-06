@@ -4,7 +4,7 @@ AS		=	$(PREFIX)as
 LD		=	$(PREFIX)gcc
 SSTRIP	=	$(DEVKITARM)/bin/arm-eabi-strip
 
-CFLAGS	=	-mbig-endian -fomit-frame-pointer -Os -Wall -I. -mcpu=arm926ej-s -marm
+CFLAGS	=	-mbig-endian -fomit-frame-pointer -Os -Wall -I. -mcpu=arm926ej-s -mthumb
 CFLAGS +=	-fno-builtin-memcpy -fno-builtin-memset -fno-builtin-toupper -fno-builtin-memcmp -fno-builtin-malloc -fno-builtin-free
 
 ASFLAGS	=	-mbig-endian -mcpu=arm926ej-s
