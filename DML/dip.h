@@ -2,9 +2,6 @@
 #define _DIP_
 
 #include "global.h"
-
-#ifndef TRIFORCE
-
 #include "string.h"
 #include "alloc.h"
 #include "ff.h"
@@ -134,13 +131,7 @@ typedef struct
 	u32 DataSize;
 } PartitionInfo;
 
-#ifdef CODES
-void DIReadKenobiGC( void );
-void DIReadCodes( void );
-#endif
 void DIInit( void );
-void DIUpdateRegisters( void );
-
-#endif
+u32 DIUpdateRegisters( void );
 
 #endif

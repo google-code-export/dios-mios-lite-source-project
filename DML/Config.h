@@ -20,11 +20,6 @@ void exi_imm(int channel, void *data, int len, int mode, int zero);
 void exi_sync(int channel);
 void exi_imm_ex(int channel, void *data, int len, int mode);
 
-void SRAM_Init( void );
-void SRAM_Flush( void );
-void SRAM_SetVideoMode( u8 VideoMode );
-u8 SRAM_GetVideoMode( void );
-
 enum VideoModes
 {
 	GCVideoModeNone		= 0,

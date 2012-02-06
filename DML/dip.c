@@ -13,82 +13,35 @@ u32 DOLMaxOff		= 0;
 u32 DOLSize			= 0;
 u32 DOLOffset		= 0;
 
+
 FIL GameFile;
 u32 read;
 
 u32 DiscRead=0;
 
 extern u32 fail;
-
-#ifdef CODES
-FIL KenobiGCFile;
-FIL CodesFile;
-u32 HandlerFlag;
-u32 CodesFlag;
-void DIReadKenobiGC( void )
-{
-	if( HandlerFlag == HANDLER_OK || HandlerFlag == HANDLER_DONE )
-	{
-		//u32 testhandler;
-		f_lseek( &KenobiGCFile, 0 );
-		f_read( &KenobiGCFile, (void*)0x1800, KenobiGCFile.fsize, &read );
-		memcpy((void *)0x1800, (void*)0x0, 6);
-		//f_close( &KenobiGCFile );
-		HandlerFlag = HANDLER_DONE;
-	}
-}
-void DIReadCodes( void )
-{
-	if( CodesFlag == CODES_OK || CodesFlag == CODES_DONE )
-	{
-		//u32 testcodes;
-		u32 maxcodesfile = 0x650;
-		f_lseek( &CodesFile, 0 );		
-		if( CodesFile.fsize >= maxcodesfile )
-		{
-			f_close( &CodesFile );
-			Shutdown();
-		}
-		f_read( &CodesFile, (void*)0x27B0, CodesFile.fsize, &read );
-		//f_close( &CodesFile );
-		CodesFlag = CODES_DONE;
-	}	
-}
-#endif
 void DIInit( void )
 {
 	memset32( (void*)DI_BASE, 0xdeadbeef, 0x30 );
 	memset32( (void*)(DI_SHADOW), 0, 0x30 );
 
 	write32( DI_SCONFIG, 0xFF );
-	write32( DI_SCOVER, 4 );
+	write32( DI_SCOVER, 0 );
 
 	f_lseek( &GameFile, 0 );
 	f_read( &GameFile, (void*)0, 0x20, &read );
 }
-void DIUpdateRegisters( void )
+u32 DIUpdateRegisters( void )
 {	
 	u32 read,i;
 	static u32 PatchState = 0;
 	static u32 DOLReadSize= 0;
-	//static FEntry *FSTable;
-	//static u32 FSTEntries = 0;
-	//static char *FSTNames;
-	
+	static FEntry *FSTable;
+	static u32 FSTEntries = 0;
+	static char *FSTNames;
+
 	if( read32(DI_CONTROL) != 0xdeadbeef )
 	{
-		if( read32( DI_CONTROL ) & (~3) )
-		{	
-			//EXIControl(1);
-			dbgprintf("DIP:Bogus write to DI_CONTROL:%08X\n", read32( DI_CONTROL ) );			
-			Shutdown();
-			
-			memset32( (void*)DI_BASE, 0xdeadbeef, 0x30 );
-			memset32( (void*)(DI_SHADOW), 0, 0x30 );
-
-			return;			
-		}
-
 		write32( DI_SCONTROL, read32(DI_CONTROL) & 3 );
 		
 		clear32( DI_SSTATUS, 0x14 );
@@ -135,32 +88,35 @@ void DIUpdateRegisters( void )
 				write32( DI_SIMM, read32(DI_IMM) );
 				write32( DI_IMM, 0xdeadbeef );
 			}
-							
+			
+			
 			switch( read32(DI_SCMD_0) >> 24 )
 			{
 				case 0xA7:
 				case 0xA9:
 					//dbgprintf("DIP:Async!\n");
 				case 0xA8:
-				{
+				{					
 					u32 Buffer	= P2C(read32(DI_SDMA_ADR));
 					u32 Length	= read32(DI_SDMA_LEN);
 					u32 Offset	= read32(DI_SCMD_1) << 2;
 
-					//dbgprintf("DIP:DVDRead( 0x%08x, 0x%08x, 0x%08x )\n", Offset, Length, Buffer|0x80000000  );
-
+				//	dbgprintf("DIP:DVDRead( 0x%08x, 0x%08x, 0x%08x )\n", Offset, Length, Buffer|0x80000000  );
+					
+					//	udelay(250);
+						
 					if( GameFile.fptr != Offset )
 					if( f_lseek( &GameFile, Offset ) != FR_OK )
 					{
-						//EXIControl(1);
+						EXIControl(1);
 						dbgprintf("DIP:Failed to seek to 0x%08x\n", Offset );
-						Shutdown();
+						while(1);
 					}
 					if( f_read( &GameFile, (char*)Buffer, Length, &read ) != FR_OK )
 					{
-						//EXIControl(1);
+						EXIControl(1);
 						dbgprintf("DIP:Failed to read from 0x%08x to 0x%08X\n", Offset, Buffer );
-						Shutdown();
+						while(1);
 					}
 					//if( ((read+31)&(~31)) != Length )
 					//{
@@ -169,61 +125,11 @@ void DIUpdateRegisters( void )
 					//	break;
 					//}
 					
-					/* The MIOS IPL is patched to not use its patcher on Wind Waker, so this shouldn't be required
 					//Zelda hack
 					if( (read32(0) >> 8 ) == 0x475A4C )
 					{
 						write32( 0, 0x475B4C00 | (read32(0) & 0xFF) );
-					}*/
-
-					/* This should not be required anymore, because DML now detects when the main.dol is loaded
-					//Hack for Metroid since it reads the FST before the main.dol
-					if( Offset == 0x28ebd340 )
-						DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 1 );
-						*/
-						
-
-/*					//GC-IPL has loaded the main.dol to RAM, now we can patch it
-					if( Buffer > 0x01700000 && Length != 0x2000 && PatchState == 0 )
-					{
-						FSTable = (FEntry*)Buffer;
-						dbgprintf("DIP:FST Offset:%p\n", FSTable );
-						
-						FSTEntries= read32( Buffer + 0x08 );
-						FSTNames= (char*)((u32)FSTable + FSTEntries * 0x0C );
-						
-						dbgprintf("DIP:FST Entries:%d\n", FSTEntries );
-						dbgprintf("DIP:FST NameOff:%p\n", FSTNames );
-
-						DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 1 );
-#ifdef CODES
-						DIReadKenobiGC();
-						DIReadCodes();
-#endif
-						switch( read32( 0 ) & 0xFF )
-						{
-							default:
-							case 'E':
-							case 'J':
-							{
-								write32( 0xCC, 0 );
-							} break;
-							case 'P':
-							{
-								if( SRAM_GetVideoMode() & GCVideoModePROG )
-									write32( 0xCC, 0 );
-								else
-									write32( 0xCC, 5 );
-							} break;
-						}
-							
-						dbgprintf("Video:%08x\n", *(u32*)0xCC );
-
-						PatchState = 1;
-
-					// Game is loading a new loader!
-					} else
-					*/
+					}
 
 					if( (u32)Buffer == 0x01300000 )
 					{
@@ -275,12 +181,6 @@ void DIUpdateRegisters( void )
 						if( DOLReadSize == DOLSize )
 						{
 							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 0 );
-#ifdef CODES
-							DIReadKenobiGC();
-							DIReadCodes();
-#endif
-							//Setting 0xCC is ignored by the PPC side, use SRAM to set the videomode.
-
 							PatchState = 0;
 						}
 					}
@@ -292,7 +192,7 @@ void DIUpdateRegisters( void )
 						clear32( DI_SCONTROL, 1 );
 
 					set32( DI_SSTATUS, 0x3A );
-
+					
 					write32( 0x0d80000C, (1<<0) | (1<<4) );
 					write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
 					write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
@@ -301,17 +201,19 @@ void DIUpdateRegisters( void )
 				} break;
 				default:
 				{
-					//EXIControl(1);
+					EXIControl(1);
 					dbgprintf("DIP:Unknown CMD:%08X %08X %08X %08X %08X %08X\n", read32(DI_SCMD_0), read32(DI_SCMD_1), read32(DI_SCMD_2), read32(DI_SIMM), read32(DI_SDMA_ADR), read32(DI_SDMA_LEN) );
-					Shutdown();
+					while(1);
 				} break;
 			}
 #ifdef ACTIVITYLED
 			clear32( HW_GPIO_OUT, 1<<5 );
 #endif
+			return 1;
 		} else {
 			;//dbgprintf("DIP:DI_CONTROL:%08X:%08X\n", read32(DI_CONTROL), read32(DI_CONTROL) );
 		}
 	}
 
+	return 0;
 }

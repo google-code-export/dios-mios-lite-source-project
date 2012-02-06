@@ -4,39 +4,13 @@ DVDConfig *DICfg = (DVDConfig *)NULL;
 u32 read;
 
 extern FIL GameFile;
-//extern u32 DOLMaxOff;
-//extern u32 DOLOffset;
+extern u32 DOLMaxOff;
+extern u32 DOLOffset;
 
-#ifdef CODES
-extern FIL KenobiGCFile;
-extern FIL CodesFile;
-extern u32 HandlerFlag;
-extern u32 CodesFlag;
-#endif
-/*
-void DVDReadConfig( void )
-{
-	char *str = (char*)malloca( 128, 32 );
-	FIL f;
-
-	sprintf( str, "/sneek/diconfig.bin" );
-	s32 fres = f_open( &f, str, FA_READ );
-	if( fres != FR_OK )
-	{
-		dbgprintf("Failed to open:\"%s\" fres:%d\n", str, fres );
-		Shutdown();
-	}
-	
-	DICfg = (DVDConfig*)malloca( f.fsize, 32 );
-	f_read( &f, DICfg, f.fsize, &read );
-	f_close( &f );
-	free(str);
-}
-*/
 s32 DVDSelectGame( void )
 {
-	//u32 i;
-	//dolhdr *dol;
+	u32 i;
+	dolhdr *dol;
 	FIL BootInfo;
 
 	char *str = (char *)malloca( 0x100, 32 );
@@ -47,64 +21,25 @@ s32 DVDSelectGame( void )
 		case FR_OK:
 		{
 			char *Path = (char*)malloca( BootInfo.fsize, 32 );
-			
-			if (BootInfo.fsize == 0 || BootInfo.fsize > 32)
-			{
-				dbgprintf("DIP:/games/boot.bin filesize = %u. Loading retail disc instead.\n", BootInfo.fsize);
-				f_close( &BootInfo );
-				return -1;
-			}
 
 			f_read( &BootInfo, Path, BootInfo.fsize, &read );
 			f_close( &BootInfo );
-			
-			f_unlink(str);		// Delete the boot.bin, so retail discs can be loaded via the disc channel
 
 			sprintf( str, "/games/%s/game.iso", Path );
-
-#ifdef CODES
-			char *strhandler = (char*)malloca( 0x100, 0x20 );
-			sprintf( strhandler, "/games/kenobigc.bin" );
-			s32 freshandler = f_open( &KenobiGCFile, strhandler, FA_READ );
-			if( freshandler != FR_OK )
-			{
-				dbgprintf("Failed to open:\"%s\" freshandler:%d\n", strhandler, freshandler );
-				HandlerFlag = HANDLER_ERR;
-			}
-			else
-			{	
-				HandlerFlag = HANDLER_OK;
-			}
-			free( strhandler );
-
-			char *strcodes = (char *)malloca( 0x100, 0x20);
-			sprintf( strcodes, "/games/%s/codes.gct", Path);
-			s32 frescodes = f_open( &CodesFile, strcodes, FA_READ);
-			if( frescodes != FR_OK )
-			{
-				dbgprintf("Failed to open:\"%s\" frescodes:%d\n", strcodes, frescodes );
-				CodesFlag = CODES_ERR;
-			}
-			else
-			{
-				CodesFlag = CODES_OK;
-			}
-			free( strcodes );			
-#endif
 
 			free( Path );
 		} break;
 		default:
 		{
-			dbgprintf("DIP:Couldn't open /games/boot.bin. Loading retail disc instead.\n");
-			return -1;
+			//dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
+			Shutdown();
 		} break;
 	}
 
 	s32 fres = f_open( &GameFile, str, FA_READ );
 	if( fres != FR_OK )
 	{
-		dbgprintf("Failed to open:\"%s\" fres:%d\n", str, fres );
+		//dbgprintf("Failed to open:\"%s\" fres:%d\n", str, fres );
 		Shutdown();
 	}
 	
@@ -169,7 +104,7 @@ s32 DVDSelectGame( void )
 	}
 	
 	SRAM_Flush();
-/*
+
 	DOLOffset = *(u32*)str;
 	dbgprintf("DIP:DOL Offset:0x%06X\n", DOLOffset );
 
@@ -190,7 +125,16 @@ s32 DVDSelectGame( void )
 
 	DOLMaxOff -= 0x80003100; 
 	dbgprintf("DIP:DOL MaxOffset:0x%06X\n", DOLMaxOff );
-*/
+
+	
+	u32 DOLSize = sizeof(dolhdr);
+						
+	for( i=0; i < 7; ++i )
+		DOLSize += dol->sizeText[i];
+	for( i=0; i < 11; ++i )
+		DOLSize += dol->sizeData[i];
+	
+	dbgprintf("DIP:DOL size:0x%06X\n", DOLSize );
 
 	free( str );
 

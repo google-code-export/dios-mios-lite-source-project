@@ -364,43 +364,31 @@ void GeckoSendBuffer( char *buffer )
 
 extern FIL Log;
 
-#if defined(debugprintf) || defined(debugprintfSD)
 static char buffer[128] ALIGNED(32);
-#endif
-
 int dbgprintf( const char *fmt, ...)
 {
-#if defined(debugprintf) || defined(debugprintfSD)
 	va_list args;
 	
 	va_start(args, fmt);
 	vsprintf(buffer, fmt, args);
 	va_end(args);
 
-#ifndef debugprintfSD
 	if( read32( 0x0D800070 ) & 1 )
 	{
 		GeckoSendBuffer( buffer );
 	} else {
-#endif
 		u32 read;
 		u32 fres = f_open( &Log, "/dm.log", FA_READ|FA_WRITE|FA_OPEN_ALWAYS );
 		if( fres != FR_OK )
 		{
 			write32( 0x0D800070, 1 );
-#ifndef debugprintfSD
-			dbgprintf("f_open('/dm.log') ret:%d\n", fres );
-#endif			
-			return 0;
+			dbgprintf("f_open():%d\n", fres );
 		}
 
 		f_lseek( &Log, Log.fsize );
 		f_write( &Log, buffer, strlen(buffer), &read );
 		f_close( &Log );
-#ifndef debugprintfSD
 	}
-#endif
-#endif	
 
 	return 1;
 }

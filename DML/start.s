@@ -3,8 +3,6 @@
 
 .global udelay
 
-.global Decrypt
-
 .global RegWrite
 .global RegRead
 
@@ -59,7 +57,6 @@ clearbss:
 	b clearbss
 
 clearbss_end:
-
 	
 	msr     CPSR_c, #211
 	ldr     sp, =0xFFFF7E60
@@ -72,7 +69,7 @@ clearbss_end:
 	msr     CPSR_c, #219
 	ldr     sp, =0xFFFF7E60
 	msr     CPSR_c, #31
-	ldr		sp, =0xFFFE4000
+	ldr     sp, =0xFFFE4000
 	
 #enable IRQs
 

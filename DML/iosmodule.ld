@@ -6,14 +6,14 @@ __stack_size = 0x4000;
 
 MEMORY
 {
-	sram 		: ORIGIN = 0xFFFF0000, LENGTH = 0x10000
-	stack 		: ORIGIN = 0xFFFE0000, LENGTH = 0x4000
+	sram		: ORIGIN = 0xFFFF0000,	LENGTH = 0x10000
+	stack		: ORIGIN = 0xFFFE0000,	LENGTH = 0x4000
 }
 
 PHDRS
 {
-	sram PT_LOAD AT ( 0xFFFF0000 ) ;
-	stack PT_LOAD AT ( 0xFFFE0000 ) ;
+	sram	PT_LOAD AT ( 0xFFFF0000 ) ;
+	stack	PT_LOAD AT ( 0xFFFE0000 ) ;
 }
 
 SECTIONS

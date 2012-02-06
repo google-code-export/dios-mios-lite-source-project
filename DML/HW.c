@@ -51,93 +51,91 @@ void HWRegWriteBatch( u32 A, u32 B, u32 C, u32 D, u32 delay )
 //	DRAMRead( 0x0163 );
 //	return DRAMRead( 0x0162 );
 //}
-/*
-void SomeFuncA( void )
-{
-	set32( 0xD80018C, 0x400 );
-	set32( 0xD80018C, 0x800 );
-}
-void SomeFuncD( void )
-{
-	u32 cookie = *(vu32*)(0xD8001D8) & 0x7FFFFFFF;
-	write32( 0xD8001D8, cookie );
-	udelay(2);
-
-	write32( 0xD8001D8, cookie & 0xBFFFFFFF );
-	udelay(10);
-
-	write32( 0xD8001D8, (read32(0xD8001D8) & 0xBFFFFFFF) | 0x40000000 );
-	udelay(50);
-
-	write32( 0xD8001D8, (read32(0xD8001D8) & 0x7FFFFFFF) | 0x80000000 );
-	udelay(2);
-
-}
-void EHCIInit( void )
-{
-	//SomeFuncA();
-
-	
-	u32 HWVerFlag = ((*(vu32*)0xD800214) << 0x18) >> 0x1C;
-
-	write32( 0xD800088, 0xFE );
-	udelay(2);
-	
-	SomeFuncD();
-
-	write32( 0xD800088, 0xF6 );
-	udelay(50);
-
-	write32( 0xD800088, 0xF4 );
-	udelay(1);
-
-	write32( 0xD800088, 0xF0 );
-	udelay(1);
-
-	write32( 0xD800088, 0x70 );
-	udelay(1);
-
-	write32( 0xD800088, 0x60 );
-	udelay(1);
-
-	write32( 0xD800088, 0x40 );
-	udelay(1); 
-
-	write32( 0xD800088, 0x00 );
-	udelay(1);
-
-	write32( 0xD0400B4, 0x2214 );
-
-	if( HWVerFlag == 0 )
-	{
-		write32( 0xD0400B0, 0x20400 );
-	} else {
-		write32( 0xD0400B0, 0x20600 );
-	}
-
-	write32( 0xD0400A4, 0x26 );
-	udelay(1);
-
-	write32( 0xD0400A4, 0x2026 );
-	udelay(1); 
-
-	write32( 0xD0400A4, 0x4026 );
-	udelay(20);
-
-	write32( 0xD0400CC, 0x111 );
-	udelay(1);
-
-	//set32( 0xD800194, 0x7FDFBCF );
-
-	write32( 0xD8001E0, 0x65244A );
-	write32( 0xD8001E4, 0x46A024 );
-	
-	return;
-}
-*/
+//void SomeFuncA( void )
+//{
+//	set32( 0xD80018C, 0x400 );
+//	set32( 0xD80018C, 0x800 );
+//}
+//void SomeFuncD( void )
+//{
+//	u32 cookie = *(vu32*)(0xD8001D8) & 0x7FFFFFFF;
+//	write32( 0xD8001D8, cookie );
+//	udelay(2);
+//
+//	write32( 0xD8001D8, cookie & 0xBFFFFFFF );
+//	udelay(10);
+//
+//	write32( 0xD8001D8, (read32(0xD8001D8) & 0xBFFFFFFF) | 0x40000000 );
+//	udelay(50);
+//
+//	write32( 0xD8001D8, (read32(0xD8001D8) & 0x7FFFFFFF) | 0x80000000 );
+//	udelay(2);
+//
+//}
+//void EHCIInit( void )
+//{
+//	//SomeFuncA();
+//
+//	
+//	u32 HWVerFlag = ((*(vu32*)0xD800214) << 0x18) >> 0x1C;
+//
+//	write32( 0xD800088, 0xFE );
+//	udelay(2);
+//	
+//	SomeFuncD();
+//
+//	write32( 0xD800088, 0xF6 );
+//	udelay(50);
+//
+//	write32( 0xD800088, 0xF4 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0xF0 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x70 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x60 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x40 );
+//	udelay(1); 
+//
+//	write32( 0xD800088, 0x00 );
+//	udelay(1);
+//
+//	write32( 0xD0400B4, 0x2214 );
+//
+//	if( HWVerFlag == 0 )
+//	{
+//		write32( 0xD0400B0, 0x20400 );
+//	} else {
+//		write32( 0xD0400B0, 0x20600 );
+//	}
+//
+//	write32( 0xD0400A4, 0x26 );
+//	udelay(1);
+//
+//	write32( 0xD0400A4, 0x2026 );
+//	udelay(1); 
+//
+//	write32( 0xD0400A4, 0x4026 );
+//	udelay(20);
+//
+//	write32( 0xD0400CC, 0x111 );
+//	udelay(1);
+//
+//	//set32( 0xD800194, 0x7FDFBCF );
+//
+//	write32( 0xD8001E0, 0x65244A );
+//	write32( 0xD8001E4, 0x46A024 );
+//	
+//	return;
+//}
 void Shutdown( void )
 {
-	udelay(10);
+	udelay(200);
 	set32( 0x0d8000E0, 1<<1);
 	while(1);
 }
@@ -172,7 +170,6 @@ void HW_184_2( void )
 {
 	set32( 0xD800184, 0x438E );
 }
-/*
 void ChangeClock( void )
 {
 	write32( HW_CLOCKS, 1 );
@@ -187,13 +184,10 @@ void ChangeClock( void )
 	write32( HW_CLOCKS, 2 );
 	udelay(1);
 }
-*/
 
-//#define RAMTEST {write32( 0x13020000, 0xdeadbeaf); if( read32( 0x13020000 ) != 0xdeadbeaf ){ dbgprintf("Fail at:%d\n", __LINE__ );/*Shutdown();*/}}
-
+#define RAMTEST {write32( 0x13020000, 0xdeadbeaf); if( read32( 0x13020000 ) != 0xdeadbeaf ){ dbgprintf("Fail at:%d\n", __LINE__ );/*Shutdown();*/}}
 
 u32 SP[3];
-/*
 void DRAMInit( u32 A, u32 B )
 {	
 	SP[0] = 0;
@@ -521,8 +515,6 @@ void HWMAgic( u32 R0, u32 R1, u32 R2, u32 R3 )
 	DRAMWrite( 0x165, 0x2B );
 	DRAMWrite( 0x164, r4 );	
 }
-
-*/
 void MIOSInit( void )
 {
 	ahb_flush_from(1);
@@ -604,7 +596,6 @@ void MIOSUnkInit( void )
 	udelay(2);
 
 }
-/*
 void MIOSEHCISub( void )
 {
 	u32 v = read32( 0xD8001D8 ) & 0x7FFFFFFF;
@@ -720,7 +711,6 @@ void MIOSEHCIInit2( void )
 //	dbgprintf("Unsupported CPU version!\n");
 	
 }
-*/
 void MIOSHWInit( u32 A, u32 B )
 {
 	GetRevision( SP+1, SP );
@@ -731,11 +721,11 @@ void MIOSHWInit( u32 A, u32 B )
 
 	MIOSUnkInit();
 
-	//MIOSEHCIInit( SP[1] );
+	MIOSEHCIInit( SP[1] );
 
 	set32( HW_RESETS, 0x7FDFBCF );
 
-	//MIOSEHCIInit2();
+	MIOSEHCIInit2();
 }
 void UNKInit( u32 A, u32 B )
 {
@@ -835,13 +825,12 @@ void BootPPC( void )
 		0x00000000, 
 		0x00000000, 
 	} ;
-	
 
 	u32 cookie = read32(HW_EXICTRL);
 
 	//Enable EXI
 	set32( HW_EXICTRL, 1 );
-
+	
 	//Upload BootCode
 	int i;
 	for( i=0; i < 16; ++i )
@@ -853,50 +842,48 @@ void BootPPC( void )
 	val = read32(HW_EXICTRL);
 }
 extern u8 *RAM;
-/*
-void MEM2Switch( u32 A )
-{
-	clear32( HW_RESETS, 0x48000 );
-	clear32( 0xD800184, 0x428E );
-
-	if( A )
-	{
-
-		DRAMWrite( 0x10B, 7 );
-		DRAMCTRLWrite( 0x15, 0 );
-		DRAMCTRLWrite( 0x18, 1 );
-		DRAMCTRLWrite( 0x19, 0 );
-		DRAMCTRLWrite( 0x4A, 0x0E );
-		DRAMCTRLWrite( 0x0F, 0x08 );
-		DRAMCTRLWrite( 0x03, 0x0E );
-
-		DRAMCTRLWrite( 0x49, 1 );
-		udelay(2);
-
-		DRAMWrite( 0x113, 631 );
-
-	} else {
-		DRAMWrite( 0x10B, 7 );
-		DRAMCTRLWrite( 0x15, 0x00 );
-		DRAMCTRLWrite( 0x18, 0x00 );
-		DRAMCTRLWrite( 0x19, 0x01 );
-		DRAMCTRLWrite( 0x4A, 0x00 );
-		DRAMCTRLWrite( 0x0F, 0x17 );
-		DRAMCTRLWrite( 0x03, 0x00 );
-
-		DRAMCTRLWrite( 0x49, 0x00 );
-		udelay(2);
-
-		DRAMWrite( 0x113, 947 );
-	}
-	set32( HW_RESETS, 0x48000 );
-	set32( 0xD800184, 0x428E );
-
-	udelay(5000);
-
-	
-}
-*/
+//void MEM2Switch( u32 A )
+//{
+//	clear32( HW_RESETS, 0x48000 );
+//	clear32( 0xD800184, 0x428E );
+//
+//	if( A )
+//	{
+//
+//		DRAMWrite( 0x10B, 7 );
+//		DRAMCTRLWrite( 0x15, 0 );
+//		DRAMCTRLWrite( 0x18, 1 );
+//		DRAMCTRLWrite( 0x19, 0 );
+//		DRAMCTRLWrite( 0x4A, 0x0E );
+//		DRAMCTRLWrite( 0x0F, 0x08 );
+//		DRAMCTRLWrite( 0x03, 0x0E );
+//
+//		DRAMCTRLWrite( 0x49, 1 );
+//		udelay(2);
+//
+//		DRAMWrite( 0x113, 631 );
+//
+//	} else {
+//		DRAMWrite( 0x10B, 7 );
+//		DRAMCTRLWrite( 0x15, 0x00 );
+//		DRAMCTRLWrite( 0x18, 0x00 );
+//		DRAMCTRLWrite( 0x19, 0x01 );
+//		DRAMCTRLWrite( 0x4A, 0x00 );
+//		DRAMCTRLWrite( 0x0F, 0x17 );
+//		DRAMCTRLWrite( 0x03, 0x00 );
+//
+//		DRAMCTRLWrite( 0x49, 0x00 );
+//		udelay(2);
+//
+//		DRAMWrite( 0x113, 947 );
+//	}
+//	set32( HW_RESETS, 0x48000 );
+//	set32( 0xD800184, 0x428E );
+//
+//	udelay(5000);
+//
+//	
+//}
 void MEMInitLow( void )
 {
 	write32( 0x3118, 0x04000000 );
@@ -980,6 +967,8 @@ void MEMInitLow( void )
 	u32 val = read32( HW_DIFLAGS );
 
 	val &= ~0x01;
+	//val &= ~0x02; // also required to be changed
+	//val &= ~0x04;	//this disables bit 14 of the IRQ Flags
 	val &= ~0x08;
 
 	val |=  0x10;
@@ -1040,12 +1029,12 @@ void MEMInitLow( void )
 	
 	val = read32(HW_DIFLAGS);
 
-	val |= 0x00000040;
-	val &= 0xFFDFFFFF;
-	//val |= 0x00200000;		// Enable DVD-R access by NOT setting this bit
-	val &= 0xFFBFFFFF;
-	val |= 0x00400000;
-	val &= 0xFFFFEFFF;
+	val |=  0x00000040;
+	val &= ~0x00200000;
+	val |=  0x00200000;
+	val &= ~0x00400000;
+	val |=  0x00400000;
+	val &= ~0x00001000;
 
 	write32( HW_DIFLAGS, val );
 	udelay(1);

@@ -5,6 +5,15 @@
 #include "FwritePatches.c"
 #include "CheatCode.c"
 
+
+unsigned char OSReportDM[] =
+{
+	0x7C, 0x08, 0x02, 0xA6, 0x90, 0x01, 0x00, 0x04, 0x90, 0xE1, 0x00, 0x08, 0x3C, 0xE0, 0xC0, 0x00, 
+	0x90, 0x67, 0x18, 0x60, 0x90, 0x87, 0x18, 0x64, 0x90, 0xA7, 0x18, 0x68, 0x90, 0xC7, 0x18, 0x6C, 
+	0x90, 0xE7, 0x18, 0x70, 0x91, 0x07, 0x18, 0x74, 0x80, 0x07, 0x18, 0x60, 0x7C, 0x00, 0x18, 0x00, 
+	0x41, 0x82, 0xFF, 0xF8, 0x80, 0xE1, 0x00, 0x08, 0x80, 0x01, 0x00, 0x04, 0x7C, 0x08, 0x03, 0xA6, 
+	0x4E, 0x80, 0x00, 0x20, 
+} ;
 // Audio streaming replacement functions copied from Swiss r92
 u32 __dvdLowAudioStatusNULL[17] = {
         // execute function(1); passed in on r4
@@ -56,61 +65,47 @@ u32 __dvdLowReadAudioNULL[] = {
 };
 
 
-unsigned char OSReportDM[] =
-{
-	0x7C, 0x08, 0x02, 0xA6, 0x90, 0x01, 0x00, 0x04, 0x90, 0xE1, 0x00, 0x08, 0x3C, 0xE0, 0xC0, 0x00, 
-	0x90, 0x67, 0x18, 0x60, 0x90, 0x87, 0x18, 0x64, 0x90, 0xA7, 0x18, 0x68, 0x90, 0xC7, 0x18, 0x6C, 
-	0x90, 0xE7, 0x18, 0x70, 0x91, 0x07, 0x18, 0x74, 0x80, 0x07, 0x18, 0x60, 0x7C, 0x00, 0x18, 0x00, 
-	0x41, 0x82, 0xFF, 0xF8, 0x80, 0xE1, 0x00, 0x08, 0x80, 0x01, 0x00, 0x04, 0x7C, 0x08, 0x03, 0xA6, 
-	0x4E, 0x80, 0x00, 0x20, 
-} ;
-
 FuncPattern FPatterns[] =
 {
 	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 	{ 0x5D0,        158,    41,     21,     52,     6,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 	{ 0x654,        167,    41,     22,     60,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
-	
+
+
 	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
 	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
+	{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",		0,		0 },
+
+	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 			0, 0 },
+	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 	0, 0 },
+	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 	0, 0 },
 
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
 
-	// Patch to allow using different video modes for games than intended
-	{ 0x824,        111,    44,     13,     53,     64,	(u8*)NULL,					0xdead0000,						"VIInit",						0,		0 },
-	
-	// These 3 functions replace the 3 audio streaming related dvd commands
-	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 			0, 0 },
-	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 	0, 0 },
-	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 	0, 0 },
+//	{ 0x824,        111,    44,     13,     53,     64,	(u8*)NULL,					0xdead0000,						"VIInit",						0,		0 },
 };		
 
 
 FuncPattern LPatterns[] =
 {	
-	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio FC",		1,		0 },
-	{ 0xD8,			17,     12,     5,      3,      2,	(u8*)NULL,				0xdead0006,						"DVDReadAbsAsyncPrio D8",		1,		0 },
-
-	// This pattern might be broken
-	//{ 0x11C,		26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,		sizeof(DVDReadAbsAsyncPrio),		"DVDReadAbsAsyncPrioForBS",	2,	0 },
-
-	{ 0xCC, 		16, 	11, 	5, 		3, 		2, DVDReadAbsAsyncPrioForBS,	sizeof(DVDReadAbsAsyncPrioForBS),	"DVDReadAbsAsyncPrioForBS", 2, 0 },
-
-	//This is not required, because the dvd read patch for games is used for apploaders as well now
-	//{ 0x270,      70,			6,      13,     12,		13,	dDVDReadAbs,			sizeof(dDVDReadAbs),				"DVDReadAbs",				6,	0 },
-	//{ 0x294,		68, 		19, 	9,		14,		18,	dDVDReadAbs, 			sizeof(dDVDReadAbs), 				"DVDReadAbs", 				6,	0 },
+	{ 0xFC,			20,     4,      7,      6,      7,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
+	{ 0xD8,			17,     12,     5,      3,      2,	LDVDReadAbsAsyncPrio,	sizeof(LDVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrio",		1,		0 },
+	//{ 0x11C,        26,     9,      7,      3,      3,	DVDReadAbsAsyncPrio,	sizeof(DVDReadAbsAsyncPrio),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
+	{ 0xCC,			16,     11,     5,      3,      2,	DVDReadAbsAsyncPrioForBS,	sizeof(DVDReadAbsAsyncPrioForBS),	"DVDReadAbsAsyncPrioForBS",	2,		0 },
 	
+	{ 0x270,        70,     6,      13,     12,     13,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
+	{ 0x294,        68,     19,     9,      14,     18,	dDVDReadAbs,			sizeof(dDVDReadAbs),			"DVDReadAbs",				0,		0 },
+
 	{ 0x280,        50,     22,     8,      18,     12, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 	{ 0x2DC,        56,     23,     9,      21,     16, __DVDInterruptHandler,	sizeof(__DVDInterruptHandler), "__DVDInterruptHandler",		4,		0 },
 
-#ifdef fwrite_patch
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite A",				5,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite B",				5,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,		sizeof(patch_fwrite_GC),		"__fwrite C",				5,		0 },
-#endif
+
 };
 
 #ifdef CARDMODE
@@ -152,9 +147,10 @@ FuncPattern CPatterns[] =
 	{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	sizeof(CARDGetEncoding),"CARDGetEncoding",		0,		0 },
 	{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		sizeof(CARDGetMemSize),	"CARDGetMemSize",		0,		0 },
 };
-#endif
 
 u32 CardLowestOff = 0;
+
+#endif
 
 void PatchB( u32 dst, u32 src )
 {
@@ -172,11 +168,12 @@ void PatchBL( u32 dst, u32 src )
 }
 void PatchGCIPL( void )
 {
+	// OLD patches
 	memcpy( (void*)0x1304048, mDVDReadAbsAsyncPrioShift, sizeof(mDVDReadAbsAsyncPrioShift) );
 	PatchB( 0x1304048, 0x1306794 );
 	memcpy( (void*)0x1303D7C, __DVDInterruptHandler, sizeof(__DVDInterruptHandler) );
 
-	memcpy( (void*)0x1306864, DVDReadDiscIDAsync, sizeof(DVDReadDiscIDAsync) );		
+	memcpy( (void*)0x1306864, DVDReadDiscIDAsync, sizeof(DVDReadDiscIDAsync) );	
 	
 	memcpy( (void*)0x1304320, OSReportDM, sizeof(OSReportDM) );
 
@@ -191,71 +188,6 @@ void PatchGCIPL( void )
 //UNKReport
 	PatchB( 0x1304320, 0x13117AC );
 }
-void create_Pattern(u8 *Data, u32 Length, FuncPattern *FP)
-{
-	u32 i;
-
-	memset( FP, 0, sizeof(FuncPattern) );
-
-	for( i = 0; i < Length; i+=4 )
-	{
-		u32 word =  read32( (u32)Data + i );
-		
-		if( (word & 0xFC000003) ==  0x48000001 )
-			FP->FCalls++;
-
-		if( (word & 0xFC000003) ==  0x48000000 )
-			FP->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FP->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FP->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FP->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FP->Branch++;
-		
-		if( (word & 0xFC000000) ==  0x80000000 )
-			FP->Loads++;
-		if( (word & 0xFF000000) ==  0x38000000 )
-			FP->Loads++;
-		if( (word & 0xFF000000) ==  0x3C000000 )
-			FP->Loads++;
-		
-		if( (word & 0xFC000000) ==  0x90000000 )
-			FP->Stores++;
-		if( (word & 0xFC000000) ==  0x94000000 )
-			FP->Stores++;
-
-		if( (word & 0xFF000000) ==  0x7C000000 )
-			FP->Moves++;
-
-		if( word == 0x4E800020 )
-			break;
-	}
-
-	FP->Length = i;
-
-	//if( (u32)Data == 0x336E08 )
-	//{
-	//	dbgprintf("Length: 0x%02X\n", FP.Length );
-	//	dbgprintf("Loads : %d\n", FP.Loads );
-	//	dbgprintf("Stores: %d\n", FP.Stores );
-	//	dbgprintf("FCalls: %d\n", FP.FCalls );
-	//	dbgprintf("Branch: %d\n", FP.Branch );
-	//	dbgprintf("Moves : %d\n", FP.Moves );
-	//	dbgprintf("Res   : %d\n", memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) );	
-	//}
-}
-
-bool compare_Pattern( FuncPattern *FP1, FuncPattern *FP2 )
-{
-	if( memcmp( FP1, FP2, sizeof(u32) * 6 ) == 0 )
-		return true;
-	else
-		return false;
-}
-
 void MPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 {
 	u32 i;
@@ -374,16 +306,16 @@ bool FPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i,j,k,offset,fail,FoundCardFuncStart=0;
-	FuncPattern temp_FP;
 
 	dbgprintf("DoCardPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
-	
+		
 	for( i=0; i < size; i+=4 )
 	{
 		if( read32( (u32)ptr + i ) != 0x7C0802A6 )	// MFLR
 			continue;
-		
-		create_Pattern((u8*)(ptr+i), size, &temp_FP);
+
+		FuncPattern fp;
+		MPattern( (u8*)(ptr+i), size, &fp );
 
 		for( j=0; j < sizeof(CPatterns)/sizeof(FuncPattern); ++j )
 		{
@@ -393,7 +325,7 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 			if( CPatterns[j].Found )				// Skip already found patches
 				continue;
 
-			if( compare_Pattern( &temp_FP, &(CPatterns[j]) ) )
+			if( CPattern( &fp, &(CPatterns[j]) ) )
 			{
 				if( CPatterns[j].Patch == CARDFreeBlocks )
 				{
@@ -526,14 +458,13 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 			dbgprintf("Pattern %s not found!\n", CPatterns[j].Name );
 	}
 
-	dbgprintf("Patches applied\n\n");
+	return;
+
 }
 #endif
 void DoPatchesLoader( char *ptr, u32 size )
 {
-	u32 i=0,j=0,k=0;
-	//u32 offset=0,read;
-	FuncPattern temp_FP;
+	u32 i=0,j=0,k=0,offset=0,read;
 
 	for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		LPatterns[j].Found = 0;	
@@ -547,17 +478,17 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 		i+=4;
 
-		create_Pattern((u8*)(ptr+i), size, &temp_FP);
-
 		for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		{
 			if( LPatterns[j].Found ) //Skip already found patches
 				continue;
 
-			if( compare_Pattern( &temp_FP, &(LPatterns[j]) ) )
+			if( FPattern( (u8*)(ptr+i), size, &(LPatterns[j]) ) )
 			{
 				dbgprintf("Patch:Found [%s]: 0x%08X\n", LPatterns[j].Name, ((u32)ptr + i) | 0x80000000 );
 
+				memcpy( (void*)(ptr+i), LPatterns[j].Patch, LPatterns[j].PatchLength );
+				
 				LPatterns[j].Found = 1;
 
 				// If this is a patch group set all others of this group as found aswell
@@ -577,24 +508,28 @@ void DoPatchesLoader( char *ptr, u32 size )
 			}
 		}
 	}
-	dbgprintf("Patches applied\n\n");
 }
 void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 {
-	u32 magicword;
 	FIL PCache;
-	u32 i=0,j=0,k=0,read;
-	FuncPattern temp_FP;
-	
+	u32 i=0,j=0,k=0,offset=0,read;
+	u32 __DVDIHOffset	= 0;
+	u32 DVDLROffset		= 0;
+	u32 PatchCount		= 0;
 	PatchCache PC;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
+	//Reset all 'Founds'
+	if( UseCache == 0 )
+	{
+		for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
+			FPatterns[j].Found = 0;
+	}
+
 	//EXIControl(1);
 
-//Hacks and other stuff
-
-#ifdef CARDMODE
+	
 	//Eternal Darkness MemcardReport
 	if( read32(0) == 0x47454450 )
 	{
@@ -603,78 +538,35 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 		newval|= 0x48000000;
 		write32( 0x0170414, newval );
 	}
-#endif
 
+	
 //Note: ORing the values prevents an early break out when a single patterns has multiple hits
-
-#ifdef CODES
-		u32 DebuggerHook = 0x0;		
-		for( i=0; i < size; i+=4 )
-		{
-			//GC VI Hook
-			if( read32( (u32)ptr + i ) == 0x906402E4 && read32( (u32)ptr + i + 4 ) == 0x38000000 
-				&& read32( (u32)ptr + i + 8 ) == 0x900402E0 && read32( (u32)ptr + i + 12 ) == 0x909E0004 )
-			{
-				j = 0;
-				while( read32( (u32)ptr + i + j ) != 0x4E800020 )
-					j+=4;
-				DebuggerHook = (u32)ptr + i + j;
-				write32( 0x0D800070, 1 );
-				dbgprintf("Debugger:[Patches.c] DebuggerHook: %08X\n", DebuggerHook);
-				write32( 0x0D800070, 0 );
-			}
-		}
-
-		if( DebuggerHook > 0x0)		
-		{ 	
-			u32 newval = 0x18A8 - DebuggerHook;
-			newval &= 0x03FFFFFC;
-			newval |= 0x48000000;
-			write32( DebuggerHook, newval );
-			write32( 0x0D800070, 1 );
-			dbgprintf("Debugger:[Patches.c] Change GC VI hook blr at %08X: %08X\n",  DebuggerHook, newval);
-			write32( 0x0D800070, 0 );
-		}
-#endif
 	
 	//cache stuff
-	static char cachename[32] ALIGNED(32);
-	sprintf(cachename, "cache%08x.bin", UseCache);
+	PatchCount=0;
 
-	if (UseCache && f_open( &PCache, cachename, FA_READ | FA_OPEN_EXISTING ) == FR_OK)
+	if( f_open( &PCache, "dmcache.bin", FA_READ | FA_OPEN_EXISTING ) == FR_OK && UseCache )
 	{
-		dbgprintf("Patch:Found cache file\n");
-		
 		if( PCache.fsize == 0 )
 		{
-			dbgprintf("Patch:But file size is 0\n");
 			f_close( &PCache );
 			goto SPatches;
 		}
-		f_read( &PCache, &magicword, 4, &read );
-		if (magicword != 0xC0DE0001)
-		{
-			dbgprintf("Patch:Wrong magic word: %08x\n");
-			f_close( &PCache );
-			goto SPatches;		
-		}
+
+		dbgprintf("Patch:Found cache file\n");
+
 	} else {
 
 SPatches:
-		//Reset all 'Founds'
-		//if( UseCache == 0 )
-		//{
-			for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
-				FPatterns[j].Found = 0;
-		//}
 
-		// Open the cache file to write the patch locations into it
-		f_open( &PCache, cachename, FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
-		
-		magicword = 0xC0DE0001;
-		f_write( &PCache, &magicword, 4, &read );
+		//Don't use the same file, it will cause a fail next time the game boots
+		if( UseCache )
+			f_open( &PCache, "dmcache.bin", FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
+		else
+			f_open( &PCache, "dmcache2.bin", FA_WRITE | FA_READ | FA_CREATE_ALWAYS );
 
 		memset( &PC, 0, sizeof( PatchCache ) );
+
 #ifdef CARDMODE
 		DoCardPatches( ptr, size, SectionOffset );
 		
@@ -683,8 +575,9 @@ SPatches:
 
 		f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 #endif
-		u32 PatchCount=0;
-		
+
+		PatchCount=0;
+	
 		for( i=0; i < size; i+=4 )
 		{
 			if( (PatchCount & 1) == 0 )
@@ -879,16 +772,36 @@ SPatches:
 			}
 		}
 	}
+#ifdef CHEATHOOK
+	
+		for( i=0; i < size; i+=4 )
+		{
+			//OSSleepThread(Pattern 1)
+			if( read32((u32)ptr + i + 0 ) == 0x3C808000 &&
+				( read32((u32)ptr + i + 4 ) == 0x38000004 || read32((u32)ptr + i + 4 ) == 0x808400E4 ) &&
+				( read32((u32)ptr + i + 8 ) == 0x38000004 || read32((u32)ptr + i + 8 ) == 0x808400E4 )
+				)
+			{
+				int j = 12;
+
+				while( read32((u32)ptr + i + j ) != 0x4E800020 )
+					j+=4;
+			
+				PC.Offset  = (u32)ptr + i + j;
+				PC.PatchID = 0xdead0001;
+
+				dbgprintf("Patch:[Hook:OSSleepThread] at %08X\n", PC.Offset | 0x80000000 );
+	
+				f_write( &PCache, &PC, sizeof( PatchCache ), &read );
+			}
+		}
+#endif
+	
+
 
 //Apply patches
 	f_sync( &PCache );
 	f_lseek( &PCache, 0 );
-
-	f_read( &PCache, &magicword, 4, &read );
-	if (magicword != 0xC0DE0001)
-	{
-		dbgprintf("Patch:Wrong magic word(how?): %08x\n");
-	}
 
 	for( i=0; i < PCache.fsize / sizeof(PatchCache); ++i )
 	{
@@ -896,15 +809,6 @@ SPatches:
 
 		u32 PatchLength;
 		
-#if defined(CHEATHOOK) || !defined(fwrite_patch)
-		// This pattern is not removed when the non fwrite version is built, so both versions can use the same cache
-		// And using the fwrite patch is not a good idea when using the Ocarina code handler
-		if( FPatterns[PC.PatchID].Patch == patch_fwrite_GC )
-		{
-			dbgprintf("Patch:Skipping Patch[%s]: 0x%08X \n", FPatterns[PC.PatchID].Name, PC.Offset | 0x80000000 );
-			continue;
-		}
-#endif
 		if( (PC.PatchID & 0xFFFF0000) == 0xdead0000 )
 		{
 			PatchLength = PC.PatchID;
@@ -912,23 +816,16 @@ SPatches:
 			dbgprintf("Patch:Applying Patch[%s]: 0x%08X \n", FPatterns[PC.PatchID].Name, PC.Offset | 0x80000000 );
 			PatchLength = FPatterns[PC.PatchID].PatchLength;
 		}
-
 		switch( PatchLength )
 		{
 			case 0xdead0000:
 			{
-				if ((read32( 0 ) & 0xFF) == 'P' && (SRAM_GetVideoMode()) == 1)
-				{
-					dbgprintf("Skipping VIInit patch, SRAM set to PAL, game is PAL and progressive mode is not enabled\n");
-				} else
-				{
-					write32( PC.Offset + 0x54 + 16, read32( PC.Offset + 0x54 + 4 ) + (1<<21) );
-				}
+				write32( PC.Offset + 0x54 + 16, read32( PC.Offset + 0x54 + 4 ) + (1<<21) );
 			} break;
 			case 0xdead0001:
 			{
 #ifdef CHEATHOOK
-				dbgprintf("   Hook@0x%08x\n", PC.Offset + SectionOffset );
+				//dbgprintf("   Hook@0x%08x\n", PC.Offset + SectionOffset );
 
 				memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) ); 
 		
@@ -939,7 +836,7 @@ SPatches:
 				newval|= 0x48000000;
 				write32( PC.Offset, newval );
 
-				memcpy( (void*)0x1800, (void*)0, 6 );	//TitleID for WiiRD
+				memcpy( (void*)0x1800, (void*)0, 6 );
 #endif
 			} break;
 			case 0xdead0002:
@@ -953,7 +850,6 @@ SPatches:
 				}
 #endif
 			} break;
-			/*	This should not be required anymore
 			case 0xdead0004:	// Audiostreaming hack
 			{
 				switch( read32(0) >> 8 )
@@ -967,12 +863,97 @@ SPatches:
 					} break;
 				}
 			} break;
-			*/
 			case 0xdead0005:
 			{
+				dbgprintf("Patch:Applying Patch[DVDLowRead]: 0x%08X \n", PC.Offset | 0x80000000 );
+								
+				//Search for __OSGetSystemTime function call
+				j=0;
+				while( read32( PC.Offset + j ) != 0x4E800020 )
+				{
+					if( (read32( PC.Offset + j ) & 0xFC000003) == 0x48000001 )
+					{
+						u32 dst = read32( PC.Offset + j ) & 0x03FFFFFC;
+							dst = ~dst;
+							dst = (dst + 1) & 0x03FFFFFC;
+							dst = PC.Offset + j -dst;
+
+						dbgprintf("DIP:__OSGetSystemTime @ %08X->%08X\n", PC.Offset + j, dst );
+						memcpy( (void*)0x2E00, DVDLowRead, sizeof(DVDLowRead) );
+						PatchBL( dst, 0x2E1C );
+						PatchBL( 0x2E00, PC.Offset + j );
+
+						break;
+					}
+					j+=4;
+				}
+				
+				//Search for lis rX, 0xA800
+				j=0;
+				while( read32( PC.Offset + j ) != 0x4E800020 )
+				{
+					if( (read32( PC.Offset + j ) & 0x0000FFFF) == 0x0000A800 )
+					{
+						write32( PC.Offset + j, (read32(PC.Offset + j) & 0xFFFF0000) | 0xE000 );
+						dbgprintf("DIP:lis rX, 0xA800 @ %08X\n", PC.Offset + j );
+						break;
+					}
+					j+=4;					
+				}
+				//Search for li rX, 3
+				j=0;
+				while( read32( PC.Offset + j ) != 0x4E800020 )
+				{
+					if( (read32( PC.Offset + j ) & 0x0000FFFF) == 0x00000003 )
+					{
+						write32( PC.Offset + j, (read32(PC.Offset + j) & 0xFFFF0000) | 1 );
+						dbgprintf("DIP:li  rX, 3 @ %08X\n", PC.Offset + j );
+						break;
+					}
+					j+=4;
+				}
 			} break;
 			case 0xdead0006:
 			{				
+				//Search for DCInvalidateRange function call
+				j=0;
+				while( read32( PC.Offset + j ) != 0x4E800020 )
+				{
+					if( (read32( PC.Offset + j ) & 0xFC000003) == 0x48000001 )
+					{
+						dbgprintf("DIP:DCInvalidateRange @ %08X\n", PC.Offset + j | 0x80000000 );
+						memcpy( (void*)0x2E30, DVDReadAbsAsyncPrio, sizeof(DVDReadAbsAsyncPrio) );
+						PatchBL( 0x2E30, PC.Offset + j );
+
+						break;
+					}
+					j+=4;
+				}
+
+				//Patch branches
+				j=0;
+				u32 count=0;
+				while( read32( PC.Offset + j ) != 0x4E800020 )
+				{
+					if( (read32( PC.Offset + j ) & 0xFF000003) == 0x41000000 )
+					{
+						dbgprintf("DIP:Branch @ %08X\n", PC.Offset + j | 0x80000000 );
+
+						if( count == 0 )
+						{
+							write32( PC.Offset + j, 0x60000000 );
+
+						} else if( count == 1 )
+						{
+							write32( PC.Offset + j, (read32(PC.Offset + j) & 0x0000FFFF) | 0x48000000 );
+
+						} else {
+							break;
+						}
+						count++;
+					}
+					j+=4;
+				}
 			} break;
 			case 0xdead000A:	//	cbForStateBusy
 			{
@@ -990,7 +971,7 @@ SPatches:
 				write32( PC.Offset + j, 0x3C80C000 ); j+=4;
 				write32( PC.Offset + j, 0x38842F30 ); j+=4;
 
-			} break;	
+			} break;		
 			//case 0xdead0010:
 			//{
 			//	switch( read32(PC.Offset + 8) & 0xF )
@@ -1059,18 +1040,11 @@ SPatches:
 					break;
 #endif
 				memcpy( (void*)(PC.Offset), FPatterns[PC.PatchID].Patch, FPatterns[PC.PatchID].PatchLength );
-				
-				if ((FPatterns[PC.PatchID].Patch == (u8 *)__dvdLowAudioStatusNULL) && ((read32(0) >> 8) == 0x47494B))
-				{
-					write32(PC.Offset + 36, 0x38600001);
-					dbgprintf("Patch:LowAudioStatus patched for Ikaruga\n");
-				}
 			} break;
-		}		
+		}
+		
 	}
 
 //Write PatchCache to file
 	f_close( &PCache );
-	
-	dbgprintf("Patches applied\n\n");
 }

@@ -37,15 +37,14 @@ void SRAM_Write( void *sram )
 void SRAM_Init( void )
 {
 	SRAM_Read(SRAM);
-	//dbgprintf("SRAM:\n");
-	//hexdump( SRAM, 64 );
+//	hexdump( SRAM, 64 );
 }
 void SRAM_SetVideoMode( u8 VideoMode )
 {
 	GC_SRAM *sram = (GC_SRAM*)SRAM;
 	
 	sram->Flags		&= 0xFC;
-	sram->BootMode	&= 0xBF;
+//	sram->BootMode	&= 0xBF;
 
 	if( VideoMode == GCVideoModePAL60 )
 	{
@@ -99,7 +98,9 @@ void exi_imm(int channel, void *data, int len, int mode, int zero)
 	volatile unsigned long *exi = (volatile unsigned long *)EXI_BASE;
 	if (mode == EXI_WRITE)
 		exi[channel * 5 + 4] = *(unsigned long*)data;
+
 	exi[channel * 5 + 3] = ((len-1)<<4)|(mode<<2)|1;
+	
 	if (mode == EXI_READ)
 	{
 		exi_last_addr = data;
