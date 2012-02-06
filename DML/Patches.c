@@ -191,142 +191,6 @@ void PatchGCIPL( void )
 //UNKReport
 	PatchB( 0x1304320, 0x13117AC );
 }
-
-bool find_dvd_read(u32 offset, u32 size, u32 *patch_offset)
-{
-	u32 i;
-	for( i=0; (i < size); i+=4 )
-	{
-		if( read32( offset + i ) == 0x3C60A800 ||	// Games
-			read32( offset + i ) == 0x3C00A800	// DolLoaders
-			) 
-		{
-			int j=0;
-			while( read32( offset + i - j ) != 0x7C0802A6 )
-				j+=4;
-
-			//Check if there is a lis %rX, 0xCC00 in this function
-			//At least Sunshine has one false hit on lis r3,0xA800
-			int k=0;
-			while( 1 )
-			{
-				if( read32( offset + i + k - j ) == 0x4E800020 )
-					break;
-				if( (read32( offset + i + k - j ) & 0xF81FFFFF) == 0x3800CC00 )
-					break;
-
-				k += 4;
-			}
-		
-			if( read32( offset + i + k - j ) == 0x4E800020 )
-				continue;
-			
-			*patch_offset = offset + i - j;
-			
-			dbgprintf("Patch:Found [DVDLowRead]: 0x%08X\n", offset + i - j + 0x80000000 );
-
-			return true;
-		}			
-	}
-	return false;
-}	
-
-void apply_dvd_read_patch(u32 offset)
-{
-	u32 j;
-	dbgprintf("Patch:Applying Patch[DVDLowRead]: 0x%08X \n", offset | 0x80000000 );
-					
-	//Search for __OSGetSystemTime function call
-	j=0;
-	while( read32( offset + j ) != 0x4E800020 )
-	{
-		if( (read32( offset + j ) & 0xFC000003) == 0x48000001 )
-		{
-			u32 dst = read32( offset + j ) & 0x03FFFFFC;
-				dst = ~dst;
-				dst = (dst + 1) & 0x03FFFFFC;
-				dst = offset + j -dst;
-
-			dbgprintf("DIP:__OSGetSystemTime @ %08X->%08X\n", offset + j, dst );
-			memcpy( (void*)0x2E00, DVDLowRead, sizeof(DVDLowRead) );
-			PatchBL( dst, 0x2E1C );
-			PatchBL( 0x2E00, offset + j );
-
-			break;
-		}
-		j+=4;
-	}
-	
-	//Search for lis rX, 0xA800
-	j=0;
-	while( read32( offset + j ) != 0x4E800020 )
-	{
-		if( (read32( offset + j ) & 0x0000FFFF) == 0x0000A800 )
-		{
-			write32( offset + j, (read32(offset + j) & 0xFFFF0000) | 0xE000 );
-			dbgprintf("DIP:lis rX, 0xA800 @ %08X\n", offset + j );
-			break;
-		}
-		j+=4;					
-	}
-	//Search for li rX, 3
-	j=0;
-	while( read32( offset + j ) != 0x4E800020 )
-	{
-		if( (read32( offset + j ) & 0x0000FFFF) == 0x00000003 )
-		{
-			write32( offset + j, (read32(offset + j) & 0xFFFF0000) | 1 );
-			dbgprintf("DIP:li  rX, 3 @ %08X\n", offset + j );
-			break;
-		}
-		j+=4;
-	}
-}
-
-void patch_DVDReadAbsAsyncPrio(u32 offset)
-{
-	u32 j;
-	//Search for DCInvalidateRange function call
-	j=0;
-	while( read32( offset + j ) != 0x4E800020 )
-	{
-		if( (read32( offset + j ) & 0xFC000003) == 0x48000001 )
-		{
-			dbgprintf("DIP:DCInvalidateRange @ %08X\n", (offset + j) | 0x80000000 );
-			memcpy( (void*)0x2E30, DVDReadAbsAsyncPrio, sizeof(DVDReadAbsAsyncPrio) );
-			PatchBL( 0x2E30, offset + j );
-
-			break;
-		}
-		j+=4;
-	}
-
-	//Patch branches
-	j=0;
-	u32 count=0;
-	while( read32( offset + j ) != 0x4E800020 )
-	{
-		if( (read32( offset + j ) & 0xFF000003) == 0x41000000 )
-		{
-			dbgprintf("DIP:Branch @ %08X\n", (offset + j) | 0x80000000 );
-
-			if( count == 0 )
-			{
-				write32( offset + j, 0x60000000 );
-
-			} else if( count == 1 )
-			{
-				write32( offset + j, (read32(offset + j) & 0x0000FFFF) | 0x48000000 );
-
-			} else {
-				break;
-			}
-			count++;
-		}
-		j+=4;
-	}
-}
-
 void create_Pattern(u8 *Data, u32 Length, FuncPattern *FP)
 {
 	u32 i;
@@ -676,15 +540,6 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 	dbgprintf("DoPatchesLoader( 0x%p, %d )\n", ptr, size );
 
-	u32 dvd_read_offset;
-	if(find_dvd_read((u32)ptr, size, &dvd_read_offset))
-	{
-		apply_dvd_read_patch(dvd_read_offset);	
-	} else
-	{
-		dbgprintf("Patch:Critical Error [DVDLowRead] not found\n");
-	}
-
 	for( i=0; i < size; i+=4 )
 	{
 		if( read32( (u32)ptr + i ) != 0x4E800020 )
@@ -702,14 +557,6 @@ void DoPatchesLoader( char *ptr, u32 size )
 			if( compare_Pattern( &temp_FP, &(LPatterns[j]) ) )
 			{
 				dbgprintf("Patch:Found [%s]: 0x%08X\n", LPatterns[j].Name, ((u32)ptr + i) | 0x80000000 );
-
-				if (LPatterns[j].PatchLength == 0xdead0006)
-				{
-					patch_DVDReadAbsAsyncPrio((u32)ptr+i);
-				} else
-				{				
-					memcpy( (void*)(ptr+i), LPatterns[j].Patch, LPatterns[j].PatchLength );
-				}
 
 				LPatterns[j].Found = 1;
 
@@ -836,15 +683,6 @@ SPatches:
 
 		f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 #endif
-		if (find_dvd_read((u32)ptr, size, &PC.Offset))
-		{
-			PC.PatchID = 0xdead0005;
-			f_write( &PCache, &PC, sizeof( PatchCache ), &read );
-		} else		
-		{
-			dbgprintf("Patch:Critical Error [DVDLowRead] not found\n");
-		}
-
 		u32 PatchCount=0;
 		
 		for( i=0; i < size; i+=4 )
@@ -1132,11 +970,9 @@ SPatches:
 			*/
 			case 0xdead0005:
 			{
-				apply_dvd_read_patch(PC.Offset);
 			} break;
 			case 0xdead0006:
 			{				
-				patch_DVDReadAbsAsyncPrio(PC.Offset);
 			} break;
 			case 0xdead000A:	//	cbForStateBusy
 			{
