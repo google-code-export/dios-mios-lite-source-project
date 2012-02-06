@@ -61,7 +61,8 @@ s32 DVDSelectGame( void )
 			{
 				case GCVideoModeNone:
 				{
-					// do nothing
+					SRAM_SetVideoMode( GCVideoModePROG );
+					dbgprintf("SRAM:Setting PROG flags\n");
 				} break;
 				case GCVideoModePAL60:
 				{
@@ -84,16 +85,18 @@ s32 DVDSelectGame( void )
 			{
 				case GCVideoModeNone:
 				{
-					// do nothing
+					SRAM_SetVideoMode( GCVideoModePROG );
+					SRAM_SetVideoMode( GCVideoModePAL60 );
+					dbgprintf("SRAM:Setting PROG&PAL60 flags\n");
 				} break;
 				case GCVideoModePAL60:
 				{
-					// do nothing
+					SRAM_SetVideoMode( GCVideoModePROG );
+					dbgprintf("SRAM:Setting PROG flags\n");
 				} break;
 				case GCVideoModePROG:
 				{
-					SRAM_SetVideoMode( GCVideoModeNone );
-					dbgprintf("SRAM:Clearing PROG flags\n");
+					// do nothing
 				} break;
 				default:
 				{
@@ -125,7 +128,6 @@ s32 DVDSelectGame( void )
 
 	DOLMaxOff -= 0x80003100; 
 	dbgprintf("DIP:DOL MaxOffset:0x%06X\n", DOLMaxOff );
-
 	
 	u32 DOLSize = sizeof(dolhdr);
 						

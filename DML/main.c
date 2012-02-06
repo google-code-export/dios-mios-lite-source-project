@@ -96,25 +96,34 @@ void DebugPoke( u8 Value )
 	clear32( 0xD8000E0, 0xFF0000 );
 	set32( 0xD8000E0, Value<<16 );
 }
+
+bool LoadDOL( void *DOLOffset );
+
 u32 fail;
 FIL Log;
 
 int main( int argc, char *argv[] )
 {
+	u32 BootGCDisc = 0;
+	FATFS fatfs;
+	s32 fres=0;
+
 	udelay(800);
+
+#ifndef REALNAND	
+	PPCReset();
+	clear32( HW_RESETS, 0x48000 );
+	clear32( 0xD800184, 0x438E );
 	
-	//PPCReset();
-	//clear32( HW_RESETS, 0x48000 );
-	//clear32( 0xD800184, 0x438E );
-	//
-	//ChangeClock();
+	ChangeClock();
 
-	//DRAMInit(1,0);
+	DRAMInit(1,0);
 
-	//set32( HW_RESETS, 0x48000 );
-	//set32( 0xD800184, 0x438E );
+	set32( HW_RESETS, 0x48000 );
+	set32( 0xD800184, 0x438E );
 
-	//UNKInit( 1, 1 );
+	UNKInit( 1, 1 );
+#endif
 
 	set32( 0xD800038, IRQ_RESET|IRQ_GPIO1 );
 	set32( 0xD80003C, IRQ_RESET|IRQ_GPIO1 );
@@ -132,15 +141,27 @@ int main( int argc, char *argv[] )
 	MIOSInit();
 
 #ifdef DEBUG
-	dbgprintf("$IOSVersion: DIOS-MIOS Lite INTERNAL: " __DATE__ " " __TIME__ " 64M DEBUG$\n");
-	dbgprintf("This is an INTERNAL version and may not be copied or re-distributed without prior written consent!\n");
+	dbgprintf("DIOS-MIOS Lite [DEBUG]\n");
 #else
-	dbgprintf("DIOS-MIOS Lite by crediar\n");
-	dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
-	//dbgprintf("It is not allowed to resell, rehost, redistribute or include this file in any packages!\n");
+	dbgprintf("DIOS-MIOS Lite\n");
 #endif
+	dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
+	dbgprintf("This software is licensed under GPLv3, for more details visit:\nhttp://code.google.com/p/dios-mios-lite-source-project\n");
+
 		
 	//dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
+
+	if( strncmp( (char *)0x007FFFE0, "gchomebrew dol", 32 ) == 0)		// Load GC homebrew
+	{
+		BootGCDisc = true;
+
+		if( LoadDOL((void *)0x00800000) )								// Copy the .dol and overwrite the ppc entrypoint
+		{
+			dbgprintf("DIP:Found gamecube homebrew...\n");
+		} else {
+			dbgprintf("DIP:Gamecube homebrew error...\n");
+		}
+	}
 	
 	//dbgprintf("MEMInitLow()...\n");
 	MEMInitLow();
@@ -152,10 +173,7 @@ int main( int argc, char *argv[] )
 	
 	HeapInit();
 	//dbgprintf("HeapInit()\n");
-
-	FATFS fatfs;
-	s32 fres=0;
-		
+			
 	sdhc_init();
 
 	//dbgprintf("f_mount()");
@@ -173,23 +191,33 @@ int main( int argc, char *argv[] )
 	LowReadDiscID((void*)0);
 
 	u32 DVDError = DVDLowGetError();
-	//dbgprintf("DVD:Error:%08X\n", DVDError );
-
+	if( DVDError )
+	{
+		dbgprintf("DVD:Error:%08X\n", DVDError );
+	}
 	if ( (DVDError >> 24 ) == 0x01 )
 	{
-		//dbgprintf("DIP:No disc in drive, can't continue!\n");
-		//Shutdown();
-		//while(1);
+		dbgprintf("DIP:No disc in drive, can't continue!\n");
+		Shutdown();
 
-	} else if( (DVDError >> 24 ) == 0x02 || (DVDError >> 24 ) == 0x05  )
+	} else if( (DVDError >> 24 ) == 0x02 || (DVDError >> 24 ) == 0x05 )
 	{
 		DVDLowReset();
 		LowReadDiscID(0);
 		DVDEnableAudioStreaming( read32(8) >> 24 );
-		//dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
+
+		DVDError = DVDLowGetError();
+
+		if( DVDError )
+			dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
 	} 
 
-	DVDSelectGame();
+	if( !BootGCDisc )
+	{
+		if( DVDSelectGame() < 0)
+			BootGCDisc = 1;		
+	}
+
 #ifdef CARDMODE
 	CardInit();
 #endif
@@ -198,7 +226,11 @@ int main( int argc, char *argv[] )
 
 	DIInit();
 	
-	PatchGCIPL();
+	if( !BootGCDisc )
+	{
+		MIOSCheckPatches();
+		DoPatchesIPL();
+	}
 	
 	write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
 	write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
@@ -211,6 +243,12 @@ int main( int argc, char *argv[] )
 	write32( 0x30F8, 0 );			// Tell PPC side to start
 
 	ahb_flush_to( AHB_PPC );
+
+	if( BootGCDisc )
+	{
+		while(1)
+			udelay(100);
+	}
 	
 	while (1)
 	{
@@ -220,25 +258,14 @@ int main( int argc, char *argv[] )
 		{
 			if( read32(0x1860) != 0 )
 			{
-				if( *(char*)(P2C(read32(0x1860))) == 1 )
-				{
-					//dbgprintf("%08X\n", P2C(read32(0x1860)) );
-					dbgprintf(	(char*)(P2C(read32(0x1864))),
-								(char*)(P2C(read32(0x1868))),
-								(char*)(P2C(read32(0x186C))),
-								(char*)(P2C(read32(0x1870))),
-								(char*)(P2C(read32(0x1864)))
-							);
-				} else {
-					//dbgprintf("%08X\n", P2C(read32(0x1860)) );
-					dbgprintf(	(char*)(P2C(read32(0x1860))),
-								(char*)(P2C(read32(0x1864))),
-								(char*)(P2C(read32(0x1868))),
-								(char*)(P2C(read32(0x186C))),
-								(char*)(P2C(read32(0x1870))),
-								(char*)(P2C(read32(0x1864)))
-							);
-				}
+				//dbgprintf("%08X\n", P2C(read32(0x1860)) );
+				dbgprintf(	(char*)(P2C(read32(0x1860))),
+							(char*)(P2C(read32(0x1864))),
+							(char*)(P2C(read32(0x1868))),
+							(char*)(P2C(read32(0x186C))),
+							(char*)(P2C(read32(0x1870))),
+							(char*)(P2C(read32(0x1864)))
+						);				
 			}
 
 			write32(0x1860, 0xdeadbeef);
@@ -250,4 +277,55 @@ int main( int argc, char *argv[] )
 #endif
 		ahb_flush_to( AHB_PPC );	//flush to ppc
 	}
+}
+
+bool LoadDOL( void *DOLOffset )
+{
+	u32 i;
+	dolhdr *dolfile;
+
+	if(DOLOffset)
+	{
+		dolfile = (dolhdr *)DOLOffset;
+
+		for (i = 0; i < 7; i++)
+		{
+			dolfile->addressText[i] &= ~0x80000000;
+			if ((!dolfile->sizeText[i]) || (dolfile->addressText[i] < 0x100))
+				continue;
+			
+			dc_invalidaterange((void *) dolfile->addressText[i], dolfile->sizeText[i]);
+			memcpy ((void *) dolfile->addressText[i], DOLOffset+dolfile->offsetText[i], dolfile->sizeText[i]);
+			dc_flushrange((void *) dolfile->addressText[i], dolfile->sizeText[i]);
+		}
+
+		for(i = 0; i < 11; i++)
+		{
+			dolfile->addressData[i] &= ~0x80000000;
+			if ((!dolfile->sizeData[i]) || (dolfile->addressData[i] < 0x100))
+				continue;
+
+			dc_invalidaterange((void*) dolfile->addressData[i], dolfile->sizeData[i]);
+			memcpy ((void*) dolfile->addressData[i], DOLOffset+dolfile->offsetData[i], dolfile->sizeData[i]);
+			dc_flushrange((void*) dolfile->addressData[i], dolfile->sizeData[i]);
+		}
+
+		dolfile->addressBSS &= ~0x80000000;
+		if (dolfile->addressBSS != 0 && dolfile->sizeBSS != 0)
+		{
+			// Clear BSS area
+			dc_invalidaterange((void *) dolfile->addressBSS, dolfile->sizeBSS);
+			memset32((void *) dolfile->addressBSS, 0, dolfile->sizeBSS);
+			dc_flushrange((void *) dolfile->addressBSS, dolfile->sizeBSS);
+		}
+
+		// Overwrite the ppc entrypoint with the one from the .dol
+		*(u32 *) 0x000037fc = dolfile->entrypoint;
+		dc_flushrange((void *) 0x00003700, 0x100);
+
+		ic_invalidateall();
+		
+		return true;
+	}
+	return false;
 }

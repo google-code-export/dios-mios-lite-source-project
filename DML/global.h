@@ -9,6 +9,7 @@
 //#define ACTIVITYLED 1
 //#define CARDMODE 1
 //#define CARDDEBUG 1
+#define REALNAND 1
 
 #define	DI_SUCCESS	1
 #define	DI_ERROR	2

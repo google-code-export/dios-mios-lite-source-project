@@ -124,12 +124,6 @@ u32 DIUpdateRegisters( void )
 					//	dbgprintf("DIP:Failed to read %d bytes, only got %d\n", Length, read );
 					//	break;
 					//}
-					
-					//Zelda hack
-					if( (read32(0) >> 8 ) == 0x475A4C )
-					{
-						write32( 0, 0x475B4C00 | (read32(0) & 0xFF) );
-					}
 
 					if( (u32)Buffer == 0x01300000 )
 					{
