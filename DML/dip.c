@@ -138,6 +138,7 @@ void DIUpdateRegisters( void )
 							
 			switch( read32(DI_SCMD_0) >> 24 )
 			{
+				case 0xA7:
 				case 0xA9:
 					//dbgprintf("DIP:Async!\n");
 				case 0xA8:
