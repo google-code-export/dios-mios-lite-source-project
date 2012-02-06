@@ -71,6 +71,9 @@ FuncPattern FPatterns[] =
 	{ 0x5D0,        158,    41,     21,     52,     6,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 	{ 0x654,        167,    41,     22,     60,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
 	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
+	
+	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
+	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
 
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
