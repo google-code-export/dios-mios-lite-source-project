@@ -158,7 +158,7 @@ int main( int argc, char *argv[] )
 
 	if( strncmp( (char *)0x007FFFE0, "gchomebrew dol", 32 ) == 0)		// Load GC homebrew
 	{
-		BootGCDisc = true;
+		BootGCDisc = 1;
 
 		if( LoadDOL((void *)0x00800000) )								// Copy the .dol and overwrite the ppc entrypoint
 		{
@@ -184,6 +184,12 @@ int main( int argc, char *argv[] )
 	//dbgprintf("f_mount()");
 	fres = f_mount(0, &fatfs );
 	//dbgprintf(":%d\n", fres );
+	
+	if (fres != FR_OK)
+	{
+		dbgprintf("Error: Could not mount fatfs, ret: %d\n", fres);
+		BootGCDisc = 1;
+	}
 	
 	//DVDReadConfig();
 

@@ -1031,7 +1031,7 @@ void MEMInitLow( void )
 
 	val |=  0x00000040;
 	val &= ~0x00200000;
-	val |=  0x00200000;
+	//val |=  0x00200000;		// Enable DVD-R access by NOT setting this bit
 	val &= ~0x00400000;
 	val |=  0x00400000;
 	val &= ~0x00001000;

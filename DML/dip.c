@@ -36,9 +36,6 @@ u32 DIUpdateRegisters( void )
 	u32 read,i;
 	static u32 PatchState = 0;
 	static u32 DOLReadSize= 0;
-	static FEntry *FSTable;
-	static u32 FSTEntries = 0;
-	static char *FSTNames;
 
 	if( read32(DI_CONTROL) != 0xdeadbeef )
 	{

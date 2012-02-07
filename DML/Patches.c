@@ -348,68 +348,6 @@ bool CPattern( FuncPattern *FPatA, FuncPattern *FPatB  )
 	else
 		return false;
 }
-bool FPattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
-{
-	u32 i;
-	FuncPattern FP;
-
-	memset( &FP, 0, sizeof(FP) );
-
-	for( i = 0; i < Length; i+=4 )
-	{
-		u32 word =  read32( (u32)Data + i );
-		
-		if( (word & 0xFC000003) ==  0x48000001 )
-			FP.FCalls++;
-
-		if( (word & 0xFC000003) ==  0x48000000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FP.Branch++;
-		
-		if( (word & 0xFC000000) ==  0x80000000 )
-			FP.Loads++;
-		if( (word & 0xFF000000) ==  0x38000000 )
-			FP.Loads++;
-		if( (word & 0xFF000000) ==  0x3C000000 )
-			FP.Loads++;
-		
-		if( (word & 0xFC000000) ==  0x90000000 )
-			FP.Stores++;
-		if( (word & 0xFC000000) ==  0x94000000 )
-			FP.Stores++;
-
-		if( (word & 0xFF000000) ==  0x7C000000 )
-			FP.Moves++;
-
-		if( word == 0x4E800020 )
-			break;
-	}
-
-	FP.Length = i;
-
-	//if( (u32)Data == 0x336E08 )
-	//{
-	//	dbgprintf("Length: 0x%02X\n", FP.Length );
-	//	dbgprintf("Loads : %d\n", FP.Loads );
-	//	dbgprintf("Stores: %d\n", FP.Stores );
-	//	dbgprintf("FCalls: %d\n", FP.FCalls );
-	//	dbgprintf("Branch: %d\n", FP.Branch );
-	//	dbgprintf("Moves : %d\n", FP.Moves );
-	//	dbgprintf("Res   : %d\n", memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) );	
-	//}
-
-	if( memcmp( &FP, FunctionPattern, sizeof(u32) * 6 ) == 0 )
-		return true;
-	else
-		return false;
-}
 #ifdef CARDMODE
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 {
@@ -572,7 +510,7 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 #endif
 void DoPatchesLoader( char *ptr, u32 size )
 {
-	u32 i=0,j=0,k=0,offset=0,read;
+	u32 i=0,j=0,k=0;
 
 	for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		LPatterns[j].Found = 0;	
@@ -586,12 +524,15 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 		i+=4;
 
+		FuncPattern fp;
+		MPattern( (u8*)(ptr+i), size, &fp );
+
 		for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		{
 			if( LPatterns[j].Found ) //Skip already found patches
 				continue;
 
-			if( FPattern( (u8*)(ptr+i), size, &(LPatterns[j]) ) )
+			if( CPattern( &fp, &(LPatterns[j]) ) )
 			{
 				dbgprintf("Patch:Found [%s]: 0x%08X\n", LPatterns[j].Name, ((u32)ptr + i) | 0x80000000 );
 
@@ -619,8 +560,7 @@ void DoPatchesLoader( char *ptr, u32 size )
 }
 void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 {
-	FIL PCache;
-	u32 i=0,j=0,k=0,offset=0,read;
+	u32 i=0,j=0,k=0;
 	u32 PatchCount		= 0;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );

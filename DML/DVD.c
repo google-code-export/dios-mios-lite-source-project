@@ -9,8 +9,6 @@ extern u32 DOLOffset;
 
 s32 DVDSelectGame( void )
 {
-	u32 i;
-	dolhdr *dol;
 	FIL BootInfo;
 
 	char *str = (char *)malloca( 0x100, 32 );
@@ -24,6 +22,8 @@ s32 DVDSelectGame( void )
 
 			f_read( &BootInfo, Path, BootInfo.fsize, &read );
 			f_close( &BootInfo );
+			
+			f_unlink(str);          // Delete the boot.bin, so retail discs can be loaded via the disc channel
 
 			sprintf( str, "/games/%s/game.iso", Path );
 
