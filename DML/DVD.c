@@ -82,19 +82,17 @@ s32 DVDSelectGame( void )
 		} break;
 		case 2:
 		{
-			switch( SRAM_GetVideoMode() )
+			switch( sram->Flags&3 )
 			{
-				case GCVideoModeNone:
+				case 0:
 				{
 					SRAM_SetVideoMode( GCVideoModePAL60 );
 					SRAM_SetVideoMode( GCVideoModePROG );
 				} break;
-				case GCVideoModePAL60:
+				case 1:
+				case 2:
 				{
-				} break;
-				case GCVideoModePROG:
-				{
-					SRAM_SetVideoMode( GCVideoModePAL60 );
+					SRAM_SetVideoMode( GCVideoModePROG );
 				} break;
 				default:
 				{
@@ -105,6 +103,8 @@ s32 DVDSelectGame( void )
 	}
 
 	SRAM_Flush();
+
+	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 	
 	free( str );
 
