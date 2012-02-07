@@ -31,16 +31,16 @@ s32 DVDSelectGame( void )
 		} break;
 		default:
 		{
-			//dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
-			Shutdown();
+			dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
+			return -1;
 		} break;
 	}
 
 	s32 fres = f_open( &GameFile, str, FA_READ );
 	if( fres != FR_OK )
 	{
-		//dbgprintf("Failed to open:\"%s\" fres:%d\n", str, fres );
-		Shutdown();
+		dbgprintf("Failed to open:\"%s\" fres:%d\n", str, fres );
+		return -2;
 	}
 	
 	f_lseek( &GameFile, 0 );
