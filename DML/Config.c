@@ -1,6 +1,7 @@
 #include "Config.h"
 
 u8 SRAM[64];
+u8 SRAMb[64];
 void SRAM_Checksum( unsigned short *buf, unsigned short *c1, unsigned short *c2) 
 { 
 	u32 i; 
@@ -43,16 +44,27 @@ void SRAM_SetVideoMode( u8 VideoMode )
 {
 	GC_SRAM *sram = (GC_SRAM*)SRAM;
 	
-	sram->Flags		&= 0xFC;
-//	sram->BootMode	&= 0xBF;
-
 	if( VideoMode == GCVideoModePAL60 )
 	{
+		sram->Flags		&= 0x7C;
+		sram->BootMode	&= 0xBF;
+
 		sram->BootMode	|= 0x40;
 		sram->Flags		|= 0x01;
 
+	} else if( VideoMode == GCVideoModeNTSC )
+	{
+		sram->Flags		&= 0x7C;
+		sram->BootMode	&= 0xBF;		
+
 	} else if( VideoMode == GCVideoModePROG )
-		sram->Flags |= GCVideoModePROG;
+	{
+		sram->Flags		|= 0x80;
+	}
+}
+GC_SRAM *SRAM_Unlock( void )
+{
+	return (GC_SRAM*)SRAM;
 }
 u8 SRAM_GetVideoMode( void )
 {

@@ -9,6 +9,7 @@
 #include "vsprintf.h"
 #include "HW.h"
 #include "dol.h"
+#include "DVD.h"
 
 
 typedef struct PatchInfo

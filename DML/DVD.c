@@ -2,6 +2,7 @@
 
 DVDConfig *DICfg = (DVDConfig *)NULL;
 u32 read;
+u32 VIPatch;
 
 extern FIL GameFile;
 extern u32 DOLMaxOff;
@@ -49,29 +50,29 @@ s32 DVDSelectGame( void )
 	f_lseek( &GameFile, 0x420 );
 	f_read( &GameFile, str, 0x40, &read );
 
-	dbgprintf("DIP:Region:%d\n", *(u32*)(str+0x38) );
-	
+	GC_SRAM *sram = SRAM_Unlock();
+
+	dbgprintf("DIP: Region:%u\n", *(u32*)(str+0x38) );
+	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
+		
 	switch( *(u32*)(str+0x38) )
 	{
 		default:
 		case 0:
 		case 1:
 		{
-			switch( SRAM_GetVideoMode() )
+			switch( sram->Flags&3 )
 			{
-				case GCVideoModeNone:
+				case 0:
 				{
+					SRAM_SetVideoMode( GCVideoModePAL60 );
 					SRAM_SetVideoMode( GCVideoModePROG );
-					dbgprintf("SRAM:Setting PROG flags\n");
 				} break;
-				case GCVideoModePAL60:
+				case 1:
+				case 2:
 				{
-					SRAM_SetVideoMode( GCVideoModeNone );
-					dbgprintf("SRAM:Clearing PAL60 flags\n");
-				} break;
-				case GCVideoModePROG:
-				{
-					// do nothing
+					SRAM_SetVideoMode( GCVideoModeNTSC );
+					SRAM_SetVideoMode( GCVideoModePROG );
 				} break;
 				default:
 				{
@@ -85,18 +86,15 @@ s32 DVDSelectGame( void )
 			{
 				case GCVideoModeNone:
 				{
-					SRAM_SetVideoMode( GCVideoModePROG );
 					SRAM_SetVideoMode( GCVideoModePAL60 );
-					dbgprintf("SRAM:Setting PROG&PAL60 flags\n");
+					SRAM_SetVideoMode( GCVideoModePROG );
 				} break;
 				case GCVideoModePAL60:
 				{
-					SRAM_SetVideoMode( GCVideoModePROG );
-					dbgprintf("SRAM:Setting PROG flags\n");
 				} break;
 				case GCVideoModePROG:
 				{
-					// do nothing
+					SRAM_SetVideoMode( GCVideoModePAL60 );
 				} break;
 				default:
 				{
@@ -105,39 +103,9 @@ s32 DVDSelectGame( void )
 			}
 		} break;
 	}
-	
+
 	SRAM_Flush();
-
-	DOLOffset = *(u32*)str;
-	dbgprintf("DIP:DOL Offset:0x%06X\n", DOLOffset );
-
-	f_lseek( &GameFile, DOLOffset );
-	f_read( &GameFile, str, 0x100, &read );
-			
-	dol = (dolhdr*)str;
 	
-	DOLMaxOff=0;
-	for( i=0; i < 7; ++i )
-	{
-		if( dol->addressText[i] == 0 )
-			continue;
-
-		if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
-			DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
-	}
-
-	DOLMaxOff -= 0x80003100; 
-	dbgprintf("DIP:DOL MaxOffset:0x%06X\n", DOLMaxOff );
-	
-	u32 DOLSize = sizeof(dolhdr);
-						
-	for( i=0; i < 7; ++i )
-		DOLSize += dol->sizeText[i];
-	for( i=0; i < 11; ++i )
-		DOLSize += dol->sizeData[i];
-	
-	dbgprintf("DIP:DOL size:0x%06X\n", DOLSize );
-
 	free( str );
 
 	return DI_SUCCESS;

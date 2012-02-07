@@ -44,8 +44,13 @@ void PrefetchAbort( void )
 }
 void DataAbort( u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h )
 {
-	EXIControl(1);
-	dbgprintf("DataAbort: %x, %x, %x, %x, %x, %x, %x, %x\n",a,b,c,d,e,f,g,h);
+	u32 val;
+
+	__asm("mov	%0,lr": "=r" (val) );
+
+	*(vu32*)0xD800070 |= 1;
+	
+	dbgprintf("DataAbort: LR:%08x, %x, %x, %x, %x, %x, %x, %x\n",val,b,c,d,e,f,g,h);
 	Shutdown();
 }
 void IRQHandler( void )
