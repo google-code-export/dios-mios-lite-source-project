@@ -84,8 +84,7 @@ FuncPattern FPatterns[] =
 	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
 	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
 	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
-
-//	{ 0x824,        111,    44,     13,     53,     64,	(u8*)NULL,					0xdead0000,						"VIInit",						0,		0 },
+	
 };		
 
 
@@ -653,11 +652,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 
 #ifdef CARDMODE
 	DoCardPatches( ptr, size, SectionOffset );
-		
-	PC.Offset  = CardLowestOff;
-	PC.PatchID = 0xdead0002;
-
-	f_write( &PCache, &PC, sizeof( PatchCache ), &read );
 #endif
 
 	PatchCount=0;
@@ -864,10 +858,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 
 				switch( FPatterns[j].PatchLength )
 				{
-					case 0xdead0000:		// VI Patch
-					{
-						write32(FOffset + 0x54 + 16, read32( FOffset + 0x54 + 4 ) + (1<<21) );
-					} break;
 					case 0xdead0004:	// Audiostreaming hack
 					{
 						switch( read32(0) >> 8 )

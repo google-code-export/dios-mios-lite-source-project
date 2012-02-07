@@ -2,7 +2,6 @@
 
 DVDConfig *DICfg = (DVDConfig *)NULL;
 u32 read;
-u32 VIPatch;
 
 extern FIL GameFile;
 extern u32 DOLMaxOff;
@@ -54,25 +53,30 @@ s32 DVDSelectGame( void )
 
 	dbgprintf("DIP: Region:%u\n", *(u32*)(str+0x38) );
 	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
-		
+			
 	switch( *(u32*)(str+0x38) )
 	{
 		default:
-		case 0:
-		case 1:
+		case 0:		//	JAP
+		case 1:		//	USA
 		{
 			switch( sram->Flags&3 )
 			{
-				case 0:
+				case 0:		// NTSC
 				{
-					SRAM_SetVideoMode( GCVideoModePAL60 );
-					SRAM_SetVideoMode( GCVideoModePROG );
+					if( !(sram->Flags&0x80) )		// PROG flag
+						SRAM_SetVideoMode( GCVideoModePROG );
+
 				} break;
-				case 1:
-				case 2:
+				case 1:		// PAL
+				case 2:		// MPAL
 				{
 					SRAM_SetVideoMode( GCVideoModeNTSC );
 					SRAM_SetVideoMode( GCVideoModePROG );
+
+					write32( 0x1312078, 0x60000000 );
+					write32( 0x1312070, 0x38000001 );
+
 				} break;
 				default:
 				{
@@ -80,7 +84,7 @@ s32 DVDSelectGame( void )
 				} break;
 			}
 		} break;
-		case 2:
+		case 2:			// EUR
 		{
 			switch( sram->Flags&3 )
 			{
@@ -88,11 +92,17 @@ s32 DVDSelectGame( void )
 				{
 					SRAM_SetVideoMode( GCVideoModePAL60 );
 					SRAM_SetVideoMode( GCVideoModePROG );
+
+					write32( 0x1312078, 0x60000000 );
+					write32( 0x1312070, 0x38000001 );
 				} break;
 				case 1:
 				case 2:
 				{
-					SRAM_SetVideoMode( GCVideoModePROG );
+					if( !(sram->BootMode&0x40) )	// PAL60 flag
+					if( !(sram->Flags&0x80) )		// PROG flag
+						SRAM_SetVideoMode( GCVideoModePAL60 );
+
 				} break;
 				default:
 				{
@@ -102,7 +112,7 @@ s32 DVDSelectGame( void )
 		} break;
 	}
 
-	SRAM_Flush();
+	//SRAM_Flush();
 
 	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 	
