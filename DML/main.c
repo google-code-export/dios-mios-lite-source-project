@@ -247,6 +247,7 @@ int main( int argc, char *argv[] )
 	write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
 	
 	set32( HW_PPCIRQMASK, (1<<31) );
+	set32( HW_IPC_PPCCTRL, 0x30 );
 	
 	EXIControl(0);
 
