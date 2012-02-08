@@ -836,8 +836,16 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 						if( (FPatterns[j].Length >> 16) == 0xdead )
 						{
 							dbgprintf("DIP:Unhandled dead case:%08X\n", FPatterns[j].Length );
-						} else {
+						} else
+						{
 							memcpy( (void*)(FOffset), FPatterns[j].Patch, FPatterns[j].PatchLength );
+							
+							if ((FPatterns[PC.PatchID].Patch == (u8 *)__dvdLowAudioStatusNULL) && ((read32(0) >> 8) == 0x47494B))
+							{
+								// Ikaruga resets to the main menu, if the returned status is 0(finished playing the stream), but it works if 1(still playing) is returned
+								write32(PC.Offset + 36, 0x38600001);
+								dbgprintf("Patch:LowAudioStatus patched for Ikaruga\n");
+							}
 						}
 
 					} break;

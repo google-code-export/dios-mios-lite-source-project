@@ -112,7 +112,7 @@ s32 DVDSelectGame( void )
 		} break;
 	}
 
-	//SRAM_Flush();
+	SRAM_Flush();
 
 	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 	

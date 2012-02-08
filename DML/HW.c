@@ -596,121 +596,121 @@ void MIOSUnkInit( void )
 	udelay(2);
 
 }
-void MIOSEHCISub( void )
-{
-	u32 v = read32( 0xD8001D8 ) & 0x7FFFFFFF;
-
-	write32( 0xD8001D8, v );
-	udelay(2);
-
-	write32( 0xD8001D8, v & 0xBFFFFFFF );
-	udelay(10);
-	
-	write32( 0xD8001D8, ( read32( 0xD8001D8 ) & 0xBFFFFFFF ) | 0x40000000 );
-	udelay(50);
-	
-	write32( 0xD8001D8, ( read32( 0xD8001D8 ) & 0x7FFFFFFF ) | 0x80000000 );
-	udelay(2);
-}
-char EHCIData[] = {
-	0x02, 0x00, 0x00, 0x00,
-	0x04, 0x00, 0x00, 0x00,
-	0x05, 0x0F, 0x00, 0x00,
-};
-void MIOSEHCISub2( u32 A )
-{
-	if( A > 2 )
-		A = 2;
-
-	A <<= 2;
-	
-	u32 R1 = *(u8*)(EHCIData+A);
-	u32 R3 = *(u8*)(EHCIData+A+1);
-	
-	R1 &= 0xF;
-	R3 &= 0xF;
-
-u32 R4 = R1 << 8;
-	R3 = R3 << 0x17;
-
-	R4 = R4 | R3;
-u32	R2 = R1 << 2;
-	R2 = R2 + R1;
-	R4 = R4 | 0x2014;
-
-	R2 = R2 - 4;
-	R2 = R2 & 0xFF;
-
-	R2 = R2 << 8;
-	R2 = R2 | 0x20000;
-
-	write32( 0xD0400B4, R4 );
-	write32( 0xD0400B0, R2 );	
-}
-void MIOSEHCIInit( u32 A )
-{
-	write32( 0xD800088, 0xFE );
-	udelay(2);
-	
-	MIOSEHCISub();
-
-	write32( 0xD800088, 0xF6 );
-	udelay(50);
-
-	write32( 0xD800088, 0xF4 );
-	udelay(1);
-
-	write32( 0xD800088, 0xF0 );
-	udelay(1);
-
-	write32( 0xD800088, 0x70 );
-	udelay(1);
-
-	write32( 0xD800088, 0x60 );
-	udelay(1);
-
-	write32( 0xD800088, 0x40 );
-	udelay(1); 
-
-	write32( 0xD800088, 0x00 );
-	udelay(1);
-
-	MIOSEHCISub2( A );
-
-	if( A > 1 )
-	{
-		write32( 0xD0400A4, 0x23 );
-		udelay(1);
-		write32( 0xD0400A4, 0x2023 );
-		udelay(1);
-		write32( 0xD0400A4, 0x4023 );
-		udelay(20);
-	} else {
-		write32( 0xD0400A4, 0x26 );
-		udelay(1);
-		write32( 0xD0400A4, 0x2026 );
-		udelay(1);
-		write32( 0xD0400A4, 0x4026 );
-		udelay(20);
-	}
-
-	write32( 0xD0400CC, 0x111 );
-
-}
-void MIOSEHCIInit2( void )
-{
-	GetRevision( SP+1, SP );
-
-	if( SP[1] <= 1 )
-	{
-		write32( 0xD8001E0, 0x65244A );
-		write32( 0xD8001E4, 0x46A024 );
-		return;
-	}
-
-//	dbgprintf("Unsupported CPU version!\n");
-	
-}
+//void MIOSEHCISub( void )
+//{
+//	u32 v = read32( 0xD8001D8 ) & 0x7FFFFFFF;
+//
+//	write32( 0xD8001D8, v );
+//	udelay(2);
+//
+//	write32( 0xD8001D8, v & 0xBFFFFFFF );
+//	udelay(10);
+//	
+//	write32( 0xD8001D8, ( read32( 0xD8001D8 ) & 0xBFFFFFFF ) | 0x40000000 );
+//	udelay(50);
+//	
+//	write32( 0xD8001D8, ( read32( 0xD8001D8 ) & 0x7FFFFFFF ) | 0x80000000 );
+//	udelay(2);
+//}
+//char EHCIData[] = {
+//	0x02, 0x00, 0x00, 0x00,
+//	0x04, 0x00, 0x00, 0x00,
+//	0x05, 0x0F, 0x00, 0x00,
+//};
+//void MIOSEHCISub2( u32 A )
+//{
+//	if( A > 2 )
+//		A = 2;
+//
+//	A <<= 2;
+//	
+//	u32 R1 = *(u8*)(EHCIData+A);
+//	u32 R3 = *(u8*)(EHCIData+A+1);
+//	
+//	R1 &= 0xF;
+//	R3 &= 0xF;
+//
+//u32 R4 = R1 << 8;
+//	R3 = R3 << 0x17;
+//
+//	R4 = R4 | R3;
+//u32	R2 = R1 << 2;
+//	R2 = R2 + R1;
+//	R4 = R4 | 0x2014;
+//
+//	R2 = R2 - 4;
+//	R2 = R2 & 0xFF;
+//
+//	R2 = R2 << 8;
+//	R2 = R2 | 0x20000;
+//
+//	write32( 0xD0400B4, R4 );
+//	write32( 0xD0400B0, R2 );	
+//}
+//void MIOSEHCIInit( u32 A )
+//{
+//	write32( 0xD800088, 0xFE );
+//	udelay(2);
+//	
+//	MIOSEHCISub();
+//
+//	write32( 0xD800088, 0xF6 );
+//	udelay(50);
+//
+//	write32( 0xD800088, 0xF4 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0xF0 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x70 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x60 );
+//	udelay(1);
+//
+//	write32( 0xD800088, 0x40 );
+//	udelay(1); 
+//
+//	write32( 0xD800088, 0x00 );
+//	udelay(1);
+//
+//	MIOSEHCISub2( A );
+//
+//	if( A > 1 )
+//	{
+//		write32( 0xD0400A4, 0x23 );
+//		udelay(1);
+//		write32( 0xD0400A4, 0x2023 );
+//		udelay(1);
+//		write32( 0xD0400A4, 0x4023 );
+//		udelay(20);
+//	} else {
+//		write32( 0xD0400A4, 0x26 );
+//		udelay(1);
+//		write32( 0xD0400A4, 0x2026 );
+//		udelay(1);
+//		write32( 0xD0400A4, 0x4026 );
+//		udelay(20);
+//	}
+//
+//	write32( 0xD0400CC, 0x111 );
+//
+//}
+//void MIOSEHCIInit2( void )
+//{
+//	GetRevision( SP+1, SP );
+//
+//	if( SP[1] <= 1 )
+//	{
+//		write32( 0xD8001E0, 0x65244A );
+//		write32( 0xD8001E4, 0x46A024 );
+//		return;
+//	}
+//
+////	dbgprintf("Unsupported CPU version!\n");
+//	
+//}
 void MIOSHWInit( u32 A, u32 B )
 {
 	GetRevision( SP+1, SP );
@@ -721,11 +721,11 @@ void MIOSHWInit( u32 A, u32 B )
 
 	MIOSUnkInit();
 
-	MIOSEHCIInit( SP[1] );
+	//MIOSEHCIInit( SP[1] );
 
 	set32( HW_RESETS, 0x7FDFBCF );
 
-	MIOSEHCIInit2();
+	//MIOSEHCIInit2();
 }
 void UNKInit( u32 A, u32 B )
 {
