@@ -46,7 +46,7 @@ typedef struct PatchCache
 } PatchCache;
 
 void DoPatchesIPL( void );
-void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache );
+void DoPatches( char *ptr, u32 size, u32 SectionOffset );
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset );
 void DoPatchesLoader( char *ptr, u32 size );
 void MIOSCheckPatches( void );

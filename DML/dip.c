@@ -95,7 +95,7 @@ u32 DIUpdateRegisters( void )
 				case 0xA8:
 				{					
 					u32 Buffer	= P2C(read32(DI_SDMA_ADR));
-					u32 Length	= read32(DI_SDMA_LEN);
+					u32 Length	= read32(DI_SCMD_2);
 					u32 Offset	= read32(DI_SCMD_1) << 2;
 
 				//	dbgprintf("DIP:DVDRead( 0x%08x, 0x%08x, 0x%08x )\n", Offset, Length, Buffer|0x80000000  );
@@ -171,12 +171,11 @@ u32 DIUpdateRegisters( void )
 						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
 						if( DOLReadSize == DOLSize )
 						{
-							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000, 0 );
+							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000 );
 							PatchState = 0;
 						}
 					}
 										
-					write32( DI_SDMA_ADR, P2C(read32(DI_SDMA_ADR) + read32(DI_SDMA_LEN)) );
 					write32( DI_SDMA_LEN, 0 );
 					
 					while( read32(DI_SCONTROL) & 1 )
@@ -184,11 +183,14 @@ u32 DIUpdateRegisters( void )
 
 					set32( DI_SSTATUS, 0x3A );
 					
-					write32( 0x0d80000C, (1<<0) | (1<<4) );
-					write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
-					write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
-					set32( 0x0d80000C, (1<<1) | (1<<2) );
-
+					if( (read32(DI_SCMD_0) >> 24) == 0xA7 )
+					{
+						write32( 0x0d80000C, (1<<0) | (1<<4) );
+						write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+						write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+						set32( 0x0d80000C, (1<<2) );
+					}
+					
 				} break;
 				default:
 				{

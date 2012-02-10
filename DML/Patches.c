@@ -558,23 +558,13 @@ void DoPatchesLoader( char *ptr, u32 size )
 		}
 	}
 }
-void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
+void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i=0,j=0,k=0;
 	u32 PatchCount		= 0;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
-	//Reset all 'Founds'
-	if( UseCache == 0 )
-	{
-		for( j=0; j < sizeof(FPatterns)/sizeof(FuncPattern); ++j )
-			FPatterns[j].Found = 0;
-	}
-
-	//EXIControl(1);
-
-	
 	//Eternal Darkness MemcardReport
 	if( read32(0) == 0x47454450 )
 	{
@@ -758,7 +748,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset, u32 UseCache )
 			u32 newval = 0x18A8 - ((u32)ptr + i + j);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000000;
-			write32( PC.Offset, newval );
+			write32( (u32)ptr + i + j, newval );
 
 			memcpy( (void*)0x1800, (void*)0, 6 );
 
