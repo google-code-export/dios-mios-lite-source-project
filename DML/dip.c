@@ -9,9 +9,11 @@ u32 StreamRAMOffset	= 0;
 u32 StreamTimer		= 0;
 u32 StreamStopEnd	= 0;
 u32 GameRun			= 0;
+u32 DOLMinOff		= 0;
 u32 DOLMaxOff		= 0;
 u32 DOLSize			= 0;
 u32 DOLOffset		= 0;
+s32 ELFNumberOfSections = 0;
 
 
 FIL GameFile;
@@ -144,34 +146,79 @@ u32 DIUpdateRegisters( void )
 						
 								DOLReadSize = sizeof(dolhdr);
 
+								DOLMinOff=0x81800000;
 								DOLMaxOff=0;
+								
 								for( i=0; i < 7; ++i )
 								{
 									if( dol->addressText[i] == 0 )
 										continue;
 
+									if( DOLMinOff > dol->addressText[i])
+										DOLMinOff = dol->addressText[i];
+
 									if( DOLMaxOff < dol->addressText[i] + dol->sizeText[i] )
 										DOLMaxOff = dol->addressText[i] + dol->sizeText[i];
 								}
+								DOLMinOff -= 0x80000000;
+								DOLMaxOff -= 0x80000000;								
 
-								DOLMaxOff -= 0x80003100; 
-
-								dbgprintf("DIP:DOLSize:%d DOLMaxOff:0x%08X\n", DOLSize, DOLMaxOff );
+								dbgprintf("DIP:DOLSize:%d DOLMinOff:0x%08X DOLMaxOff:0x%08X\n", DOLSize, DOLMinOff, DOLMaxOff );
 
 								PatchState = 1;
 							}
 						} else if( read32(Buffer) == 0x7F454C46 )
 						{
-							dbgprintf("DIP:Game is loading an .elf %u\n", Length );
+							dbgprintf("DIP:Game is loading an .elf\n");
+							for (i = ((*(u32 *)0x00000038) & ~0x80000000) + 16; i < 0x01800000; i+=12)	// Search the fst for the dvd offset of the .elf file
+							{
+								if (*(u32 *)i == Offset)
+								{
+									DOLSize = *(u32 *)(i+4);
+									dbgprintf("DIP:.elf found in the fst, size: %u\n", DOLSize);
+
+									DOLReadSize = Length;
+									if( DOLReadSize == DOLSize )	// The .elf is read completely already
+									{
+										DoPatches( (char*)(Buffer), Length, 0x80000000 );
+									} else							// a part of the .elf is read
+									{
+										PatchState = 2;
+										DOLMinOff=0x01800000;
+										DOLMaxOff=0;
+										if (Length <= 4096) // The .elf header is read
+										{
+											ELFNumberOfSections = read16(Buffer+0x2c) -2;	// Assume that 2 sections are .bss and .sbss which are not read
+										} else				// The .elf is read into a buffer
+										{
+											ELFNumberOfSections = -1;						// Make sure that ELFNumberOfSections == 0 does not become true
+										}
+									}
+									break;
+								}
+							}
 						}
 
-					} else if ( PatchState == 1 )
+					} else if ( PatchState != 0 )
 					{
 						DOLReadSize += Length;
-						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
-						if( DOLReadSize == DOLSize )
+						
+						if (PatchState == 2)
 						{
-							DoPatches( (char*)(0x3100), DOLMaxOff, 0x80000000 );
+							ELFNumberOfSections--;
+							
+							// DOLMinOff and DOLMaxOff are optimised when loading .dol files
+							if (DOLMinOff > Buffer)
+								DOLMinOff = Buffer;
+								
+							if (DOLMaxOff < Buffer+Length)
+								DOLMaxOff = Buffer+Length;						
+						}
+						
+						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
+						if( DOLReadSize == DOLSize || (PatchState == 2 && ELFNumberOfSections == 0))
+						{
+							DoPatches( (char*)(DOLMinOff), DOLMaxOff-DOLMinOff, 0x80000000 );
 							PatchState = 0;
 						}
 					}
