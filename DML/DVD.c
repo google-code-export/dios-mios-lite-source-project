@@ -6,7 +6,71 @@ u32 read;
 extern FIL GameFile;
 extern u32 DOLMaxOff;
 extern u32 DOLOffset;
+#ifdef SPEEDTEST
+void SpeedTest( void )
+{
+	double timerA,timerB,timerC,timerD,now;
+	u32 resA,resB,resC,resD;
+	u32 i,read,rand;
 
+	dbgprintf("DIP:Starting speed test of SD card\n");
+	
+	timerA = read32(HW_TIMER);
+	for( i=0; i < 15*1024*1024; i+=32*1024 )
+	{
+		f_read( &GameFile, (void*)0x800000, 32*1024, &read );
+	}
+	now = *(vu32*)0x0d800010;
+	resA = (u32)((now-timerB) * 128.0f / 243000000.0f);
+
+	timerB = read32(HW_TIMER);
+	for( i=0; i < 15*1024*1024; i+=64*1024 )
+	{
+		f_read( &GameFile, (void*)0x800000, 64*1024, &read );
+	}
+	now = *(vu32*)0x0d800010;
+	resB = (u32)((now-timerB) * 128.0f / 243000000.0f);
+	
+	timerC = read32(HW_TIMER);
+	for( i=0; i < 15*1024*1024; i+=32*1024 )
+	{
+		rand = (read32(HW_TIMER) & 0x3ff) << 17;
+
+		f_lseek( &GameFile, rand );
+		f_read( &GameFile, (void*)0x800000, 32*1024, &read );
+	}
+	now = *(vu32*)0x0d800010;
+	resC = (u32)((now-timerC) * 128.0f / 243000000.0f);
+
+	timerD = read32(HW_TIMER);
+	for( i=0; i < 15*1024*1024; i+=64*1024 )
+	{
+		rand = (read32(HW_TIMER) & 0x3ff) << 17;
+
+		f_lseek( &GameFile, rand );
+		f_read( &GameFile, (void*)0x800000, 64*1024, &read );
+	}
+	now = *(vu32*)0x0d800010;
+	resD = (u32)((now-timerD) * 128.0f / 243000000.0f);
+
+	EXIControl(1);
+	
+	dbgprintf("15MB (32KB reads) Speed:%ukB/s\n", 15*1024*1024 / resA / 2 / 1024 );
+	dbgprintf("15MB (64KB reads) Speed:%ukB/s\n", 15*1024*1024 / resB / 2 / 1024 );
+	dbgprintf("15MB (32KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resC / 2 / 1024 );
+	dbgprintf("15MB (64KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resD / 2/ 1024 );
+	
+	EXIControl(0);
+	
+	dbgprintf("15MB (32KB reads) Speed:%ukB/s\n", 15*1024*1024 / resA / 2 / 1024 );
+	dbgprintf("15MB (64KB reads) Speed:%ukB/s\n", 15*1024*1024 / resB / 2 / 1024 );
+	dbgprintf("15MB (32KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resC / 2 / 1024 );
+	dbgprintf("15MB (64KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resD / 2/ 1024 );
+
+	udelay(10000);
+	Shutdown();
+}
+#endif
 s32 DVDSelectGame( void )
 {
 	FIL BootInfo;
@@ -48,6 +112,10 @@ s32 DVDSelectGame( void )
 
 	f_lseek( &GameFile, 0x420 );
 	f_read( &GameFile, str, 0x40, &read );
+
+#ifdef SPEEDTEST
+	SpeedTest();
+#endif
 
 	GC_SRAM *sram = SRAM_Unlock();
 
