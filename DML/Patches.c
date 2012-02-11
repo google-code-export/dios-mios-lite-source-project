@@ -565,6 +565,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
+#ifdef CARDMODE
 	//Eternal Darkness MemcardReport
 	if( read32(0) == 0x47454450 )
 	{
@@ -573,7 +574,13 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 		newval|= 0x48000000;
 		write32( 0x0170414, newval );
 	}
+#endif
 
+	// Reset Found
+	for( k=0; k < sizeof(FPatterns)/sizeof(FuncPattern); ++k )
+	{
+		FPatterns[k].Found = 0;
+	}
 	
 //Note: ORing the values prevents an early break out when a single patterns has multiple hits
 	
