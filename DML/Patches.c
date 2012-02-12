@@ -67,12 +67,6 @@ u32 __dvdLowReadAudioNULL[] = {
 
 FuncPattern FPatterns[] =
 {
-	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
-	{ 0x5D0,        158,    41,     21,     52,     6,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
-	{ 0x654,        167,    41,     22,     60,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
-	{ 0x634,        167,    41,     21,     58,     11,	(u8*)NULL,				0xdead000A,	"cbForStateBusy",			3,		0 },
-
-
 	{ 0xCC,			17,     10,     5,      3,      2,	DVDInquiryAsync,			sizeof(DVDInquiryAsync),		"DVDInquiryAsync",				0,		0 },
 	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
 	{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",		0,		0 },
@@ -732,9 +726,25 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 			PatchCount |= 8;
 		}
 
+		if( (PatchCount & 32) == 0 )
+		if( (read32( (u32)ptr + i + 0 ) & 0xFFFF) == 0xCC00 &&
+			(read32( (u32)ptr + i + 4 ) & 0xFFFF) == 0x6000 &&
+			(read32( (u32)ptr + i +12 ) & 0xFFFF) == 0x001C 
+			) 
+		{
+			u32 Offset = (u32)ptr + i;
+
+			dbgprintf("Patch:[cbForStateBusy] %08X\n", Offset + SectionOffset );
+
+			write32( Offset, 0x3C80C000 );
+			write32( Offset+4, 0x38842F30 );
+		
+			PatchCount |= 32;
+		}
+
 #ifdef CHEATHOOK
 	
-		//OSSleepThread(Pattern 1)
+		// OSSleepThread(Pattern 1)
 		if( (PatchCount & 16) == 0 )
 		if( read32((u32)ptr + i + 0 ) == 0x3C808000 &&
 			( read32((u32)ptr + i + 4 ) == 0x38000004 || read32((u32)ptr + i + 4 ) == 0x808400E4 ) &&
@@ -749,9 +759,12 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 			dbgprintf("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)ptr + i + j) | 0x80000000 );
 	
 			memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) ); 
-		
-			write32( P2C(read32(0x1808)), 1 );
 
+#ifdef DEBUGGERWAIT
+			write32( P2C(read32(0x1808)), 1 );
+#else
+			write32( P2C(read32(0x1808)), 0 );
+#endif
 			u32 newval = 0x18A8 - ((u32)ptr + i + j);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000000;
@@ -759,15 +772,44 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 			memcpy( (void*)0x1800, (void*)0, 6 );
 
+			char *path = (char*)malloc( 128 );
+
+			sprintf( path, "/games/%.6s/%.6s.gct", (char*)0, (char*)0 );
+
+			FIL CodeFD;
+			u32 read;
+
+			if( f_open( &CodeFD, path, FA_OPEN_EXISTING|FA_READ ) == FR_OK )
+			{
+				if( CodeFD.fsize >= 0x730 )
+				{
+					dbgprintf("Patch:Cheatfile is too large, it must not be large than 1840 bytes!\n");
+				} else {
+					if( f_read( &CodeFD, (void*)(0x1800+sizeof(kenobigc)-8), CodeFD.fsize, &read ) == FR_OK )
+					{
+						dbgprintf("Patch:Copied cheat file to memory\n");
+						write32( 0x1804, 1 );
+					} else
+						dbgprintf("Patch:Failed to read cheat file:\"%s\"\n", path );
+				}
+
+				f_close( &CodeFD );
+
+			} else {
+				dbgprintf("Patch:Failed to open/find cheat file:\"%s\"\n", path );
+			}
+
+			free(path);
+
 			PatchCount |= 16;
 		}
 
 
-		if( PatchCount == 31 )
+		if( PatchCount == 63 )
 			break;
 
 #else
-		if( PatchCount == 15 )
+		if( PatchCount == 47 )
 			break;
 #endif
 	}
@@ -807,22 +849,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 								write32( FOffset + 0xC0, 0x60000000 );
 							} break;
 						}
-					} break;
-					case 0xdead000A:
-					{
-						//Find lis 0xcc00
-
-						int k=0;
-						while(1)
-						{
-							if( read32( FOffset + k ) == 0x3C80CC00 )
-								break;
-							k+=4;
-						}
-				
-						dbgprintf("Patch:[cbForStateBusy] %08X\n", FOffset + k + SectionOffset );
-						write32( FOffset + k, 0x3C80C000 ); k+=4;
-						write32( FOffset + k, 0x38842F30 ); k+=4;
 					} break;
 					default:
 					{

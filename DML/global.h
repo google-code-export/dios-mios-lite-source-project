@@ -5,7 +5,8 @@
 
 #define CARD_DEBUG 1
 
-//#define CHEATHOOK 1
+#define CHEATHOOK 1
+//#define DEBUGGERWAIT 1
 //#define ACTIVITYLED 1
 //#define CARDMODE 1
 //#define CARDDEBUG 1
