@@ -64,6 +64,18 @@ u32 __dvdLowReadAudioNULL[] = {
         0x4E800020
 };
 
+u32 __GXSetVAT_patch[31] = {
+	/*0x8122ce00,*/ 0x39400000, 0x896904f2, 0x7d284b78,
+	0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
+	0x98e68000, 0x61400070, 0x61440080, 0x61430090,
+	0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
+	0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
+	0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
+	0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
+	0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
+};
+
+
 
 FuncPattern FPatterns[] =
 {
@@ -71,13 +83,15 @@ FuncPattern FPatterns[] =
 	{ 0xC8,			16,     9,      5,      3,      3,	DVDSeekAbsAsyncPrio,		sizeof(DVDSeekAbsAsyncPrio),	"DVDSeekAbsAsyncPrio",			0,		0 },
 	{ 0xD4,			13,     8,      11,     2,      7,	(u8*)NULL,					0xdead0004,						"AIResetStreamSampleCount",		0,		0 },
 
-	{ 0x94, 		18, 	10, 	2, 		0, 		2, 		(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 			0, 0 },
-	{ 0x88, 		18, 	8, 		2, 		0, 		2, 		(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 	0, 0 },
-	{ 0x98, 		19, 	8, 		2, 		1, 		3, 		(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 	0, 0 },
+	{ 0x94, 		18, 	10, 	2, 		0, 		2,	(u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 				0, 		0 },
+	{ 0x88, 		18, 	8, 		2, 		0, 		2,	(u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 		0, 		0 },
+	{ 0x98, 		19, 	8, 		2, 		1, 		3,	(u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 		0, 		0 },
 
-	{ 0x308,        40,     18,     10,     23,     17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
-	{ 0x338,        48,     20,     10,     24,     16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
-	{ 0x2D8,        41,     17,     8,      21,     13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
+	{ 0x308,        40,     18,     10,		23,		17,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite A",					1,		0 },
+	{ 0x338,        48,     20,     10,		24,		16,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite B",					1,		0 },
+	{ 0x2D8,        41,     17,     8,		21,		13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
+	
+	{ 0x98, 		8, 		3, 		0, 		3,		5,	(u8*)NULL,					0xdead0001,						"__GXSetVAT",					0,		0 },
 	
 };		
 
@@ -187,8 +201,9 @@ void MIOSCheckPatches()
 	switch(read32(0) >> 8)
 	{
 		case 0x475A4C:
-			dbgprintf("Warning: MIOS Patch for Wind Waker(GZL) will be skipped\n");
-			dbgprintf("The game will freeze when opening the mini map in dungeons\n");
+			// This patch is applied now
+			//dbgprintf("Warning: MIOS Patch for Wind Waker(GZL) will be skipped\n");
+			//dbgprintf("The game will freeze when opening the mini map in dungeons\n");
 			remove_MIOS_patches = true;
 		break;
 		
@@ -774,7 +789,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 			char *path = (char*)malloc( 128 );
 
-			sprintf( path, "/games/%.6s/%.6s.gct", (char*)0, (char*)0 );
+			sprintf( path, "/games/%.6s/%.6s.gct", (char*)0x1800, (char*)0x1800 );
 
 			FIL CodeFD;
 			u32 read;
@@ -849,6 +864,11 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 								write32( FOffset + 0xC0, 0x60000000 );
 							} break;
 						}
+					} break;
+					case 0xdead0001:	// Patch for __GXSetVAT, fixes the dungeon map freeze in Wind Waker
+					{
+						write32(FOffset, (read32(FOffset) & 0xff00ffff) | 0x220000);
+						memcpy((void *)(FOffset + 4), __GXSetVAT_patch, sizeof(__GXSetVAT_patch));					
 					} break;
 					default:
 					{
