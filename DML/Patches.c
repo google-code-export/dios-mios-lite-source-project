@@ -5,6 +5,7 @@
 #include "FwritePatches.c"
 #include "CheatCode.c"
 
+extern u32 DOLSize;
 
 unsigned char OSReportDM[] =
 {
@@ -867,8 +868,22 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 					} break;
 					case 0xdead0001:	// Patch for __GXSetVAT, fixes the dungeon map freeze in Wind Waker
 					{
-						write32(FOffset, (read32(FOffset) & 0xff00ffff) | 0x220000);
-						memcpy((void *)(FOffset + 4), __GXSetVAT_patch, sizeof(__GXSetVAT_patch));					
+						switch( read32(0) >> 8 )
+						{
+							case 0x505A4C:	// The Legend of Zelda: Collector's Edition
+								if( DOLSize != 3847012 )	// only patch the main.dol of the Zelda:ww game 
+									break;
+							case 0x475A4C:	// The Legend of Zelda: The Wind Waker
+							{
+								write32(FOffset, (read32(FOffset) & 0xff00ffff) | 0x220000);
+								memcpy((void *)(FOffset + 4), __GXSetVAT_patch, sizeof(__GXSetVAT_patch));
+
+								dbgprintf("Patch:Applied __GXSetVAT patch\n");
+
+							} break;
+							default:
+							break;
+						}			
 					} break;
 					default:
 					{
