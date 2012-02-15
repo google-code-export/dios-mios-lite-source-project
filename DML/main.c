@@ -106,12 +106,14 @@ bool LoadDOL( void *DOLOffset );
 
 u32 fail;
 FIL Log;
+u32 dbgprintf_sd_access;
 
 int main( int argc, char *argv[] )
 {
 	u32 BootGCDisc = 0;
 	FATFS fatfs;
-	s32 fres=0;
+	s32 fres = 0;
+	dbgprintf_sd_access = 0;
 
 	udelay(800);
 
@@ -144,17 +146,6 @@ int main( int argc, char *argv[] )
 	}
 
 	MIOSInit();
-
-#ifdef DEBUG
-	dbgprintf("DIOS-MIOS Lite [DEBUG]\n");
-#else
-	dbgprintf("DIOS-MIOS Lite\n");
-#endif
-	dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
-	dbgprintf("This software is licensed under GPLv3, for more details visit:\nhttp://code.google.com/p/dios-mios-lite-source-project\n");
-
-		
-	//dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
 
 	if( strncmp( (char *)0x007FFFE0, "gchomebrew dol", 32 ) == 0)		// Load GC homebrew
 	{
@@ -189,7 +180,22 @@ int main( int argc, char *argv[] )
 	{
 		dbgprintf("Error: Could not mount fatfs, ret: %d\n", fres);
 		BootGCDisc = 1;
+	} else
+	{
+		dbgprintf_sd_access = 1;
 	}
+
+	dbgprintf("\n\n\n");
+
+#ifdef DEBUG
+	dbgprintf("DIOS-MIOS Lite [DEBUG]\n");
+#else
+	dbgprintf("DIOS-MIOS Lite\n");
+#endif
+	dbgprintf("Built: " __DATE__ " " __TIME__ "\n");
+	dbgprintf("This software is licensed under GPLv3, for more details visit:\nhttp://code.google.com/p/dios-mios-lite-source-project\n");
+
+	//dbgprintf("CPU Ver:%d.%d\n", SP[1], SP[0] );
 	
 	//DVDReadConfig();
 

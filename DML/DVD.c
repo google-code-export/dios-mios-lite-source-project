@@ -62,11 +62,6 @@ void SpeedTest( void )
 	
 	EXIControl(0);
 	
-	dbgprintf("15MB (32KB reads) Speed:%ukB/s\n", 15*1024*1024 / resA / 2 / 1024 );
-	dbgprintf("15MB (64KB reads) Speed:%ukB/s\n", 15*1024*1024 / resB / 2 / 1024 );
-	dbgprintf("15MB (32KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resC / 2 / 1024 );
-	dbgprintf("15MB (64KB random reads) Speed:%ukB/s\n", 15*1024*1024 / resD / 2/ 1024 );
-
 	udelay(10000);
 	Shutdown();
 }
@@ -75,7 +70,7 @@ s32 DVDSelectGame( void )
 {
 	FIL BootInfo;
 
-	char *str = (char *)malloca( 0x100, 32 );
+	char *str = (char *)malloca( 0x400, 32 );
 	sprintf( str, "/games/boot.bin" );
 
 	switch( f_open( &BootInfo, str, FA_READ ) )
@@ -110,6 +105,11 @@ s32 DVDSelectGame( void )
 	f_lseek( &GameFile, 0 );
 	f_read( &GameFile, (void*)0, 0x20, &read );
 
+	f_lseek( &GameFile, 0 );
+	f_read( &GameFile, str, 0x400, &read );
+	
+	dbgprintf("DIP:Loading game %.6s: %s\n", str, (char *)(str+0x20));
+
 	f_lseek( &GameFile, 0x420 );
 	f_read( &GameFile, str, 0x40, &read );
 
@@ -119,8 +119,8 @@ s32 DVDSelectGame( void )
 
 	GC_SRAM *sram = SRAM_Unlock();
 
-	dbgprintf("DIP: Region:%u\n", *(u32*)(str+0x38) );
-	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
+	dbgprintf("DIP:Region:%u\n", *(u32*)(str+0x38) );
+	dbgprintf("SRAM:Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 			
 	switch( *(u32*)(str+0x38) )
 	{
@@ -182,7 +182,7 @@ s32 DVDSelectGame( void )
 
 	SRAM_Flush();
 
-	dbgprintf("SRAM: Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
+	dbgprintf("SRAM:Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 	
 	free( str );
 

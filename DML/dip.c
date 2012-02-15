@@ -18,10 +18,24 @@ s32 ELFNumberOfSections = 0;
 
 FIL GameFile;
 u32 read;
-
 u32 DiscRead=0;
 
-extern u32 fail;
+char *getfilenamebyoffset(u32 offset)
+{
+	u32 fst_offset = read32(0x38) & ~0x80000000;
+	
+	u32 i;
+	for (i = fst_offset + 12; i < 0x01800000; i+=12)
+	{
+		if (read8(i) == 0 && offset >= read32(i + 4) && offset < read32(i + 4) + read32(i + 8))
+		{
+			return (char *)(fst_offset + read32(fst_offset+8)*12 + (read32(i) & 0x00ffffff));
+		}
+	}
+	return NULL;
+}
+
+
 void DIInit( void )
 {
 	memset32( (void*)DI_BASE, 0xdeadbeef, 0x30 );
@@ -169,17 +183,23 @@ u32 DIUpdateRegisters( void )
 							}
 						} else if( read32(Buffer) == 0x7F454C46 )
 						{
-							dbgprintf("DIP:Game is loading an .elf\n");
+							if (getfilenamebyoffset(Offset) != NULL)
+							{
+								dbgprintf("DIP:The Game is loading %s\n", getfilenamebyoffset(Offset));
+							} else
+							{
+								dbgprintf("DIP:The Game is loading some .elf that is not in the fst...\n");
+							}
 							for (i = ((*(u32 *)0x00000038) & ~0x80000000) + 16; i < 0x01800000; i+=12)	// Search the fst for the dvd offset of the .elf file
 							{
 								if (*(u32 *)i == Offset)
 								{
 									DOLSize = *(u32 *)(i+4);
-									dbgprintf("DIP:.elf found in the fst, size: %u\n", DOLSize);
-
 									DOLReadSize = Length;
+
 									if( DOLReadSize == DOLSize )	// The .elf is read completely already
 									{
+										dbgprintf("DIP:The .elf is read completely, file size: %u bytes\n", DOLSize);
 										DoPatches( (char*)(Buffer), Length, 0x80000000 );
 									} else							// a part of the .elf is read
 									{
@@ -189,9 +209,11 @@ u32 DIUpdateRegisters( void )
 										if (Length <= 4096) // The .elf header is read
 										{
 											ELFNumberOfSections = read16(Buffer+0x2c) -2;	// Assume that 2 sections are .bss and .sbss which are not read
+											dbgprintf("DIP:The .elf header is read(%u bytes), .elf file size: %u bytes, number of sections to load: %u\n", Length, DOLSize, ELFNumberOfSections);
 										} else				// The .elf is read into a buffer
 										{
 											ELFNumberOfSections = -1;						// Make sure that ELFNumberOfSections == 0 does not become true
+											dbgprintf("DIP:The .elf is read into a buffer, read progress: %u/%u bytes\n", Length, DOLSize);
 										}
 									}
 									break;
@@ -212,9 +234,17 @@ u32 DIUpdateRegisters( void )
 								DOLMinOff = Buffer;
 								
 							if (DOLMaxOff < Buffer+Length)
-								DOLMaxOff = Buffer+Length;						
+								DOLMaxOff = Buffer+Length;
+							
+							if (ELFNumberOfSections < 0)
+							{
+								dbgprintf("DIP:.elf read progress: %u/%u bytes\n", DOLReadSize, DOLSize);
+							} else
+							{
+								dbgprintf("DIP:.elf read progress: %u/%u bytes, sections left: %u\n", DOLReadSize, DOLSize, ELFNumberOfSections);
+							}
 						}
-						
+
 						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
 						if( DOLReadSize == DOLSize || (PatchState == 2 && ELFNumberOfSections == 0))
 						{

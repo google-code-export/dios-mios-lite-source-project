@@ -363,6 +363,7 @@ void GeckoSendBuffer( char *buffer )
 }
 
 extern FIL Log;
+extern u32 dbgprintf_sd_access;
 
 static char buffer[128] ALIGNED(32);
 int dbgprintf( const char *fmt, ...)
@@ -373,15 +374,22 @@ int dbgprintf( const char *fmt, ...)
 	vsprintf(buffer, fmt, args);
 	va_end(args);
 
+	// Only write debug output to usb gecko when possible
 	if( read32( 0x0D800070 ) & 1 )
 	{
 		GeckoSendBuffer( buffer );
-	} else {
+	}
+	
+	if (dbgprintf_sd_access)
+	{
+		// Write all debug output to the log file, independent from the usb gecko output
+		// Only fwrite output from games won't be logged to sd card
 		u32 read;
 		u32 fres = f_open( &Log, "/dm.log", FA_READ|FA_WRITE|FA_OPEN_ALWAYS );
 		if( fres != FR_OK )
 		{
 			write32( 0x0D800070, 1 );
+			dbgprintf_sd_access = 0;
 			dbgprintf("f_open():%d\n", fres );
 		}
 
