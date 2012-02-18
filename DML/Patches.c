@@ -797,9 +797,10 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 			if( f_open( &CodeFD, path, FA_OPEN_EXISTING|FA_READ ) == FR_OK )
 			{
-				if( CodeFD.fsize >= 0x730 )
+				if( CodeFD.fsize >= 0x2F00 - (0x1800+sizeof(kenobigc)-8) )
 				{
-					dbgprintf("Patch:Cheatfile is too large, it must not be large than 1840 bytes!\n");
+					dbgprintf("Patch:Cheatfile is too large, it must not be large than %d bytes!\n",
+						0x2F00 - (0x1800+sizeof(kenobigc)-8));
 				} else {
 					if( f_read( &CodeFD, (void*)(0x1800+sizeof(kenobigc)-8), CodeFD.fsize, &read ) == FR_OK )
 					{
