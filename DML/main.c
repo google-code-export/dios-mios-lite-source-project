@@ -24,6 +24,7 @@ Copyright (C) 2010-2012  crediar
 
 
 char __aeabi_unwind_cpp_pr0[0];
+u32 dbgprintf_sd_access;
 
 void Syscall( u32 a, u32 b, u32 c, u32 d )
 {
@@ -63,6 +64,8 @@ void IRQHandler( void )
 		{
 			set32( HW_EXICTRL, 1 );
 
+			dbgprintf_sd_access = 0; // Writing to sd card here might be the cause for the file system corruptions
+			
 			int i;
 			for( i = 0; i < 0x20; i+=4 )
 				dbgprintf("0x%08X:0x%08X\t0x%08X\n", i, read32( CARD_BASE + i ), read32( CARD_SHADOW + i ) );
@@ -106,7 +109,6 @@ bool LoadDOL( void *DOLOffset );
 
 u32 fail;
 FIL Log;
-u32 dbgprintf_sd_access;
 
 int main( int argc, char *argv[] )
 {

@@ -204,8 +204,8 @@ u32 DIUpdateRegisters( void )
 									} else							// a part of the .elf is read
 									{
 										PatchState = 2;
-										DOLMinOff=0x01800000;
-										DOLMaxOff=0;
+										DOLMinOff=Buffer;
+										DOLMaxOff=Buffer+Length;
 										if (Length <= 4096) // The .elf header is read
 										{
 											ELFNumberOfSections = read16(Buffer+0x2c) -2;	// Assume that 2 sections are .bss and .sbss which are not read
@@ -246,7 +246,7 @@ u32 DIUpdateRegisters( void )
 						}
 
 						//dbgprintf("DIP:DOLSize:%d DOLReadSize:%d\n", DOLSize, DOLReadSize );
-						if( DOLReadSize == DOLSize || (PatchState == 2 && ELFNumberOfSections == 0))
+						if( DOLReadSize >= DOLSize || (PatchState == 2 && ELFNumberOfSections == 0))
 						{
 							DoPatches( (char*)(DOLMinOff), DOLMaxOff-DOLMinOff, 0x80000000 );
 							PatchState = 0;
