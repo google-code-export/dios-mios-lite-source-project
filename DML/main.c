@@ -104,9 +104,16 @@ void DebugPoke( u8 Value )
 	clear32( 0xD8000E0, 0xFF0000 );
 	set32( 0xD8000E0, Value<<16 );
 }
+void SysReset( void )
+{
+	write32( HW_RESETS, (read32( HW_RESETS ) | 0x20 ) & (~1) );
+}
+void SysShutdown( void )
+{
+	write32( HW_RESETS, (read32( HW_RESETS ) & (~0x20) ) & (~1) );
+}
 
 bool LoadDOL( void *DOLOffset );
-
 u32 fail;
 FIL Log;
 
@@ -273,6 +280,17 @@ int main( int argc, char *argv[] )
 	while (1)
 	{
 		ahb_flush_from( AHB_STARLET );	//flush to arm
+
+#ifdef PADHOOK
+		if( (((read32(0x12FC) >> 16) & 0x254) == 0x254 ) )
+		{
+			SysReset();
+		}
+		if( (((read32(0x12FC) >> 16) & 0x154) == 0x154 ) )
+		{
+			SysShutdown();
+		}
+#endif
 		
 		if( read32(0x1860) != 0xdeadbeef )
 		{

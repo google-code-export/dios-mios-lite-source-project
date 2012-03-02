@@ -23,5 +23,6 @@
 #include "asm\DVDCancelStreamAsync.h"
 #include "asm\DVDGetStreamPlayAddrAsync.h"
 #include "asm\DVDLowRead.h"
+#include "asm\padipc.h"
 
 #endif

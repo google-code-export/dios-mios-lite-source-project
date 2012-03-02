@@ -93,7 +93,10 @@ FuncPattern FPatterns[] =
 	{ 0x2D8,        41,     17,     8,		21,		13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
 	
 	{ 0x98, 		8, 		3, 		0, 		3,		5,	(u8*)NULL,					0xdead0001,						"__GXSetVAT",					0,		0 },
-	
+#ifdef PADHOOK
+	{ 0x3A8,        86,     13,     27,     17,     24,	(u8*)NULL,					0xdead000B,						"PADRead A",					2,		0 },
+	{ 0x2FC,        73,     8,      23,     16,     15,	(u8*)NULL,					0xdead000B,						"PADRead B",					2,		0 },
+#endif
 };		
 
 
@@ -886,6 +889,27 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 							break;
 						}			
 					} break;
+#ifdef PADHOOK
+					case 0xdead000B:	//	PADRead hook
+					{				
+						//Find blr
+
+						j=0;
+						while(1)
+						{
+							if( read32( FOffset + j ) == 0x4E800020 )
+								break;
+							j+=4;
+						}
+
+						dbgprintf("Patch:[PADRead hook] %08X\n", FOffset + j );
+				
+						memcpy( (void*)0x2EE0, padipc, sizeof(padipc) );
+						PatchB( 0x2EE0, FOffset + j );
+						write32( 0x12FC, 0 );
+	
+					} break;
+#endif
 					default:
 					{
 #ifdef CHEATHOOK

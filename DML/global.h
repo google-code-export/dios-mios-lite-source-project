@@ -12,7 +12,10 @@
 //#define CARDDEBUG 1
 #define REALNAND 1
 //#define SPEEDTEST 1
+#define PADHOOK 1
 //#define DEBUGGER 1
+
+#define CONFIG_VERSION 0x00000001
 
 #define	DI_SUCCESS	1
 #define	DI_ERROR	2
