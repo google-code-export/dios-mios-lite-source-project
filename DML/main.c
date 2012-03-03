@@ -110,7 +110,10 @@ void SysReset( void )
 }
 void SysShutdown( void )
 {
-	write32( HW_RESETS, (read32( HW_RESETS ) & (~0x20) ) & (~1) );
+	set32( HW_GPIO_ENABLE, GPIO_POWER );
+	set32( HW_GPIO_OUT, GPIO_POWER );
+
+	while(1);
 }
 
 bool LoadDOL( void *DOLOffset );

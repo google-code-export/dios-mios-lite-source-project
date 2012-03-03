@@ -96,6 +96,7 @@ FuncPattern FPatterns[] =
 #ifdef PADHOOK
 	{ 0x3A8,        86,     13,     27,     17,     24,	(u8*)NULL,					0xdead000B,						"PADRead A",					2,		0 },
 	{ 0x2FC,        73,     8,      23,     16,     15,	(u8*)NULL,					0xdead000B,						"PADRead B",					2,		0 },
+	{ 0x3B0,        87,     13,     27,     17,     25,	(u8*)NULL,					0xdead000B,						"PADRead C",					2,		0 },
 #endif
 };		
 
