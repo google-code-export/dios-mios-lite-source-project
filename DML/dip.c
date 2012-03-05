@@ -63,9 +63,9 @@ u32 DIUpdateRegisters( void )
 			
 		if( read32(DI_SCONTROL) & 1 )
 		{
-#ifdef ACTIVITYLED
-			set32( HW_GPIO_OUT, 1<<5 );
-#endif
+			if( ConfigGetConfig(DML_CFG_ACTIVITY_LED) )
+				set32( HW_GPIO_OUT, 1<<5 );
+
 			if( read32(DI_CMD_0) != 0xdeadbeef )
 			{
 				write32( DI_SCMD_0, read32(DI_CMD_0) );
@@ -276,9 +276,10 @@ u32 DIUpdateRegisters( void )
 					while(1);
 				} break;
 			}
-#ifdef ACTIVITYLED
-			clear32( HW_GPIO_OUT, 1<<5 );
-#endif
+
+			if( ConfigGetConfig(DML_CFG_ACTIVITY_LED) )
+				clear32( HW_GPIO_OUT, 1<<5 );
+
 			return 1;
 		} else {
 			;//dbgprintf("DIP:DI_CONTROL:%08X:%08X\n", read32(DI_CONTROL), read32(DI_CONTROL) );

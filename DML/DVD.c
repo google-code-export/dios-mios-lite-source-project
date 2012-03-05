@@ -84,7 +84,10 @@ s32 DVDSelectGame( void )
 			
 			f_unlink(str);          // Delete the boot.bin, so retail discs can be loaded via the disc channel
 
-			sprintf( str, "/games/%s/game.iso", Path );
+			if( ConfigGetConfig(DML_CFG_GAME_PATH) )
+				sprintf( str, "%s", ConfigGetGamePath() );
+			else
+				sprintf( str, "/games/%s/game.iso", Path );
 
 			free( Path );
 		} break;
@@ -122,59 +125,84 @@ s32 DVDSelectGame( void )
 	dbgprintf("DIP:Region:%u\n", *(u32*)(str+0x38) );
 	dbgprintf("SRAM:Mode:%u(%u) EURGB60:%u Prog:%u\n", sram->Flags&3, read32(0xCC), !!(sram->BootMode&0x40), !!(sram->Flags&0x80) );
 			
-	switch( *(u32*)(str+0x38) )
+	switch( ConfigGetVideMode() & 0xFFFF0000 )
 	{
-		default:
-		case 0:		//	JAP
-		case 1:		//	USA
+		case DML_VID_FORCE:
 		{
-			switch( sram->Flags&3 )
-			{
-				case 0:		// NTSC
-				{
-					if( !(sram->Flags&0x80) )		// PROG flag
-						SRAM_SetVideoMode( GCVideoModePROG );
+			if( ConfigGetVideMode() & DML_VID_FORCE_PAL50 )
+				SRAM_SetVideoMode( GCVideoModeNone );
 
-				} break;
-				case 1:		// PAL
-				case 2:		// MPAL
-				{
-					SRAM_SetVideoMode( GCVideoModeNTSC );
-					SRAM_SetVideoMode( GCVideoModePROG );
+			if( ConfigGetVideMode() & DML_VID_FORCE_PAL60 )
+				SRAM_SetVideoMode( GCVideoModePAL60 );
 
-					write32( 0x1312078, 0x60000000 );
-					write32( 0x1312070, 0x38000001 );
+			if( ConfigGetVideMode() & DML_VID_FORCE_NTSC )
+				SRAM_SetVideoMode( GCVideoModeNTSC );
 
-				} break;
-				default:
-				{
-					dbgprintf("SRAM:Invalid Video mode setting:%d\n", SRAM_GetVideoMode() );
-				} break;
-			}
+			if( ConfigGetVideMode() & DML_VID_FORCE_PROG )
+				SRAM_SetVideoMode( GCVideoModePROG );
+
 		} break;
-		case 2:			// EUR
+		case DML_VID_NONE:
 		{
-			switch( sram->Flags&3 )
+		} break;
+		case DML_VID_DML_AUTO:
+		default:
+		{
+			switch( *(u32*)(str+0x38) )
 			{
-				case 0:
-				{
-					SRAM_SetVideoMode( GCVideoModePAL60 );
-					SRAM_SetVideoMode( GCVideoModePROG );
-
-					write32( 0x1312078, 0x60000000 );
-					write32( 0x1312070, 0x38000001 );
-				} break;
-				case 1:
-				case 2:
-				{
-					if( !(sram->BootMode&0x40) )	// PAL60 flag
-					if( !(sram->Flags&0x80) )		// PROG flag
-						SRAM_SetVideoMode( GCVideoModePAL60 );
-
-				} break;
 				default:
+				case 0:		//	JAP
+				case 1:		//	USA
 				{
-					dbgprintf("SRAM:Invalid Video mode setting:%d\n", SRAM_GetVideoMode() );
+					switch( sram->Flags&3 )
+					{
+						case 0:		// NTSC
+						{
+							if( !(sram->Flags&0x80) )		// PROG flag
+								SRAM_SetVideoMode( GCVideoModePROG );
+
+						} break;
+						case 1:		// PAL
+						case 2:		// MPAL
+						{
+							SRAM_SetVideoMode( GCVideoModeNTSC );
+							SRAM_SetVideoMode( GCVideoModePROG );
+
+							write32( 0x1312078, 0x60000000 );
+							write32( 0x1312070, 0x38000001 );
+
+						} break;
+						default:
+						{
+							dbgprintf("SRAM:Invalid Video mode setting:%d\n", SRAM_GetVideoMode() );
+						} break;
+					}
+				} break;
+				case 2:			// EUR
+				{
+					switch( sram->Flags&3 )
+					{
+						case 0:
+						{
+							SRAM_SetVideoMode( GCVideoModePAL60 );
+							SRAM_SetVideoMode( GCVideoModePROG );
+
+							write32( 0x1312078, 0x60000000 );
+							write32( 0x1312070, 0x38000001 );
+						} break;
+						case 1:
+						case 2:
+						{
+							if( !(sram->BootMode&0x40) )	// PAL60 flag
+							if( !(sram->Flags&0x80) )		// PROG flag
+								SRAM_SetVideoMode( GCVideoModePAL60 );
+
+						} break;
+						default:
+						{
+							dbgprintf("SRAM:Invalid Video mode setting:%d\n", SRAM_GetVideoMode() );
+						} break;
+					}
 				} break;
 			}
 		} break;

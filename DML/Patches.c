@@ -93,11 +93,11 @@ FuncPattern FPatterns[] =
 	{ 0x2D8,        41,     17,     8,		21,		13,	patch_fwrite_GC,			sizeof(patch_fwrite_GC),		"__fwrite C",					1,		0 },
 	
 	{ 0x98, 		8, 		3, 		0, 		3,		5,	(u8*)NULL,					0xdead0001,						"__GXSetVAT",					0,		0 },
-#ifdef PADHOOK
+
 	{ 0x3A8,        86,     13,     27,     17,     24,	(u8*)NULL,					0xdead000B,						"PADRead A",					2,		0 },
 	{ 0x2FC,        73,     8,      23,     16,     15,	(u8*)NULL,					0xdead000B,						"PADRead B",					2,		0 },
 	{ 0x3B0,        87,     13,     27,     17,     25,	(u8*)NULL,					0xdead000B,						"PADRead C",					2,		0 },
-#endif
+
 };		
 
 
@@ -120,7 +120,6 @@ FuncPattern LPatterns[] =
 
 };
 
-#ifdef CARDMODE
 
 FuncPattern CPatterns[] =
 {
@@ -162,7 +161,6 @@ FuncPattern CPatterns[] =
 
 u32 CardLowestOff = 0;
 
-#endif
 
 void PatchB( u32 dst, u32 src )
 {
@@ -362,7 +360,6 @@ bool CPattern( FuncPattern *FPatA, FuncPattern *FPatB  )
 	else
 		return false;
 }
-#ifdef CARDMODE
 void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i,j,k,offset,fail,FoundCardFuncStart=0;
@@ -521,7 +518,6 @@ void DoCardPatches( char *ptr, u32 size, u32 SectionOffset )
 	return;
 
 }
-#endif
 void DoPatchesLoader( char *ptr, u32 size )
 {
 	u32 i=0,j=0,k=0;
@@ -543,6 +539,10 @@ void DoPatchesLoader( char *ptr, u32 size )
 
 		for( j=0; j < sizeof(LPatterns)/sizeof(FuncPattern); ++j )
 		{
+			if( !ConfigGetConfig(DML_CFG_PADHOOK) )
+				if( LPatterns[j].PatchLength == 0xdead000B )	// skip PADHook patterns if padhook is disabled
+					continue;
+
 			if( LPatterns[j].Found ) //Skip already found patches
 				continue;
 
@@ -579,16 +579,18 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
-#ifdef CARDMODE
-	//Eternal Darkness MemcardReport
-	if( read32(0) == 0x47454450 )
+
+	if( ConfigGetConfig(DML_CFG_NMM) )
 	{
-		u32 newval = 0x0200C0C - 0x0170414;
-		newval&= 0x03FFFFFC;
-		newval|= 0x48000000;
-		write32( 0x0170414, newval );
+		//Eternal Darkness MemcardReport
+		if( read32(0) == 0x47454450 )
+		{
+			u32 newval = 0x0200C0C - 0x0170414;
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000000;
+			write32( 0x0170414, newval );
+		}
 	}
-#endif
 
 	// Reset Found
 	for( k=0; k < sizeof(FPatterns)/sizeof(FuncPattern); ++k )
@@ -596,15 +598,10 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 		FPatterns[k].Found = 0;
 	}
 	
-//Note: ORing the values prevents an early break out when a single patterns has multiple hits
+	if( ConfigGetConfig(DML_CFG_NMM) )
+		DoCardPatches( ptr, size, SectionOffset );
 	
-	//cache stuff
-	PatchCount=0;
-
-#ifdef CARDMODE
-	DoCardPatches( ptr, size, SectionOffset );
-#endif
-
+//Note: ORing the values prevents an early break out when a single patterns has multiple hits
 	PatchCount=0;
 	
 	for( i=0; i < size; i+=4 )
@@ -762,77 +759,84 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 			PatchCount |= 32;
 		}
 
-#ifdef CHEATHOOK
-	
-		// OSSleepThread(Pattern 1)
-		if( (PatchCount & 16) == 0 )
-		if( read32((u32)ptr + i + 0 ) == 0x3C808000 &&
-			( read32((u32)ptr + i + 4 ) == 0x38000004 || read32((u32)ptr + i + 4 ) == 0x808400E4 ) &&
-			( read32((u32)ptr + i + 8 ) == 0x38000004 || read32((u32)ptr + i + 8 ) == 0x808400E4 )
-			)
+		if( ConfigGetConfig(DML_CFG_CHEATS) )
 		{
-			int j = 12;
-
-			while( read32((u32)ptr + i + j ) != 0x4E800020 )
-				j+=4;
-			
-			dbgprintf("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)ptr + i + j) | 0x80000000 );
 	
-			memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) ); 
-
-#ifdef DEBUGGERWAIT
-			write32( P2C(read32(0x1808)), 1 );
-#else
-			write32( P2C(read32(0x1808)), 0 );
-#endif
-			u32 newval = 0x18A8 - ((u32)ptr + i + j);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000000;
-			write32( (u32)ptr + i + j, newval );
-
-			memcpy( (void*)0x1800, (void*)0, 6 );
-
-			char *path = (char*)malloc( 128 );
-
-			sprintf( path, "/games/%.6s/%.6s.gct", (char*)0x1800, (char*)0x1800 );
-
-			FIL CodeFD;
-			u32 read;
-
-			if( f_open( &CodeFD, path, FA_OPEN_EXISTING|FA_READ ) == FR_OK )
+			// OSSleepThread(Pattern 1)
+			if( (PatchCount & 16) == 0 )
+			if( read32((u32)ptr + i + 0 ) == 0x3C808000 &&
+				( read32((u32)ptr + i + 4 ) == 0x38000004 || read32((u32)ptr + i + 4 ) == 0x808400E4 ) &&
+				( read32((u32)ptr + i + 8 ) == 0x38000004 || read32((u32)ptr + i + 8 ) == 0x808400E4 )
+				)
 			{
-				if( CodeFD.fsize >= 0x2F00 - (0x1800+sizeof(kenobigc)-8) )
+				int j = 12;
+
+				while( read32((u32)ptr + i + j ) != 0x4E800020 )
+					j+=4;
+			
+				dbgprintf("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)ptr + i + j) | 0x80000000 );
+	
+				memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) ); 
+
+				if( ConfigGetConfig(DML_CFG_DEBUGWAIT) )
+					write32( P2C(read32(0x1808)), 1 );
+				else
+					write32( P2C(read32(0x1808)), 0 );
+
+				u32 newval = 0x18A8 - ((u32)ptr + i + j);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000000;
+				write32( (u32)ptr + i + j, newval );
+
+				memcpy( (void*)0x1800, (void*)0, 6 );
+
+				char *path = (char*)malloc( 128 );
+
+				if( ConfigGetConfig(DML_CFG_CHEAT_PATH) )
 				{
-					dbgprintf("Patch:Cheatfile is too large, it must not be large than %d bytes!\n",
-						0x2F00 - (0x1800+sizeof(kenobigc)-8));
+					sprintf( path, "%s", ConfigGetCheatPath() );
 				} else {
-					if( f_read( &CodeFD, (void*)(0x1800+sizeof(kenobigc)-8), CodeFD.fsize, &read ) == FR_OK )
-					{
-						dbgprintf("Patch:Copied cheat file to memory\n");
-						write32( 0x1804, 1 );
-					} else
-						dbgprintf("Patch:Failed to read cheat file:\"%s\"\n", path );
+					sprintf( path, "/games/%.6s/%.6s.gct", (char*)0x1800, (char*)0x1800 );
 				}
 
-				f_close( &CodeFD );
+				FIL CodeFD;
+				u32 read;
 
-			} else {
-				dbgprintf("Patch:Failed to open/find cheat file:\"%s\"\n", path );
+				if( f_open( &CodeFD, path, FA_OPEN_EXISTING|FA_READ ) == FR_OK )
+				{
+					if( CodeFD.fsize >= 0x2F00 - (0x1800+sizeof(kenobigc)-8) )
+					{
+						dbgprintf("Patch:Cheatfile is too large, it must not be large than %d bytes!\n",
+							0x2F00 - (0x1800+sizeof(kenobigc)-8));
+					} else {
+						if( f_read( &CodeFD, (void*)(0x1800+sizeof(kenobigc)-8), CodeFD.fsize, &read ) == FR_OK )
+						{
+							dbgprintf("Patch:Copied cheat file to memory\n");
+							write32( 0x1804, 1 );
+						} else
+							dbgprintf("Patch:Failed to read cheat file:\"%s\"\n", path );
+					}
+
+					f_close( &CodeFD );
+
+				} else {
+					dbgprintf("Patch:Failed to open/find cheat file:\"%s\"\n", path );
+				}
+
+				free(path);
+
+				PatchCount |= 16;
 			}
-
-			free(path);
-
-			PatchCount |= 16;
 		}
 
-
-		if( PatchCount == 63 )
-			break;
-
-#else
-		if( PatchCount == 47 )
-			break;
-#endif
+		if( ConfigGetConfig(DML_CFG_CHEATS) )
+		{
+			if( PatchCount == 63 )
+				break;
+		} else {
+			if( PatchCount == 47 )
+				break;
+		}
 	}
 		
 	for( i=0; i < size; i+=4 )
@@ -876,7 +880,7 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 						switch( read32(0) >> 8 )
 						{
 							case 0x505A4C:	// The Legend of Zelda: Collector's Edition
-								if( DOLSize != 3847012 )	// only patch the main.dol of the Zelda:ww game 
+								if( !(DOLSize == 3847012 || DOLSize == 3803812) )	// only patch the main.dol of the Zelda:ww game 
 									break;
 							case 0x475A4C:	// The Legend of Zelda: The Wind Waker
 							{
@@ -890,7 +894,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 							break;
 						}			
 					} break;
-#ifdef PADHOOK
 					case 0xdead000B:	//	PADRead hook
 					{				
 						//Find blr
@@ -910,13 +913,14 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 						write32( 0x12FC, 0 );
 	
 					} break;
-#endif
 					default:
 					{
-#ifdef CHEATHOOK
-						if( FPatterns[j].Patch == patch_fwrite_GC )
-							break;
-#endif
+						if( ConfigGetConfig( DML_CFG_CHEATS ) )
+						{
+							if( FPatterns[j].Patch == patch_fwrite_GC )
+								break;
+						}
+
 						if( (FPatterns[j].Length >> 16) == 0xdead )
 						{
 							dbgprintf("DIP:Unhandled dead case:%08X\n", FPatterns[j].Length );

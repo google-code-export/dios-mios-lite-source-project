@@ -216,6 +216,7 @@ int main( int argc, char *argv[] )
 	set32( HW_EXICTRL, 1 );
 
 	SRAM_Init();
+	ConfigInit( (DML_CFG*)0x1700 );
 
 	LowReadDiscID((void*)0);
 
@@ -247,9 +248,8 @@ int main( int argc, char *argv[] )
 			BootGCDisc = 1;		
 	}
 
-#ifdef CARDMODE
-	CardInit();
-#endif
+	if( ConfigGetConfig(DML_CFG_NMM) )
+		CardInit();
 
 	clear32( HW_EXICTRL, 0 );
 
@@ -284,7 +284,6 @@ int main( int argc, char *argv[] )
 	{
 		ahb_flush_from( AHB_STARLET );	//flush to arm
 
-#ifdef PADHOOK
 		if( (((read32(0x12FC) >> 16) & 0x254) == 0x254 ) )
 		{
 			SysReset();
@@ -293,7 +292,6 @@ int main( int argc, char *argv[] )
 		{
 			SysShutdown();
 		}
-#endif
 		
 		if( read32(0x1860) != 0xdeadbeef )
 		{
@@ -313,9 +311,10 @@ int main( int argc, char *argv[] )
 		}
 
 		DIUpdateRegisters();
-#ifdef CARDMODE
-		CARDUpdateRegisters();
-#endif
+
+		if( ConfigGetConfig(DML_CFG_NMM) )
+			CARDUpdateRegisters();
+
 		ahb_flush_to( AHB_PPC );	//flush to ppc
 	}
 }

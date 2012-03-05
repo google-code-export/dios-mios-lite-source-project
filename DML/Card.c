@@ -330,30 +330,32 @@ void CardWriteFile( u32 FileNo, u8 *Buffer, u32 Length, u32 Offset )
 	{
 		case FR_OK:
 		{
-#ifdef CARD_DEBUG
-			if( f_lseek( &savefile, Offset ) != FR_OK )
+			if( ConfigGetConfig( DML_CFG_NMM_DEBUG ) )
 			{
-				//EXIControl(1);
-				dbgprintf("Failed to seek to %08x\n", Offset );
-				Shutdown();
+				if( f_lseek( &savefile, Offset ) != FR_OK )
+				{
+					//EXIControl(1);
+					dbgprintf("Failed to seek to %08x\n", Offset );
+					Shutdown();
+				} else {
+					if( f_write( &savefile, (void*)Buffer, Length, &read ) != FR_OK )
+					{
+						//EXIControl(1);
+						dbgprintf("Failed to write %d bytes to %p\n", Length, Buffer );
+						Shutdown();					
+					}
+					if( read != Length )
+					{
+						//EXIControl(1);
+						dbgprintf("Short write; %d of %d bytes written!\n", read, Length );
+						Shutdown();			
+					}
+				}
 			} else {
-				if( f_write( &savefile, (void*)Buffer, Length, &read ) != FR_OK )
-				{
-					//EXIControl(1);
-					dbgprintf("Failed to write %d bytes to %p\n", Length, Buffer );
-					Shutdown();					
-				}
-				if( read != Length )
-				{
-					//EXIControl(1);
-					dbgprintf("Short write; %d of %d bytes written!\n", read, Length );
-					Shutdown();			
-				}
+				f_lseek( &savefile, Offset );
+				f_write( &savefile, (void*)Buffer, Length, &read );
 			}
-#else
-			f_lseek( &savefile, Offset );
-			f_write( &savefile, (void*)Buffer, Length, &read );
-#endif
+
 			f_close( &savefile );
 		} break;
 		default:
@@ -440,7 +442,8 @@ void CARDUpdateRegisters( void )
 
 		write32( CARD_CONTROL, 0xdeadbeef );
 		
-		set32( HW_GPIO_OUT, 1<<5 );
+		if( ConfigGetConfig(DML_CFG_ACTIVITY_LED) )
+			set32( HW_GPIO_OUT, 1<<5 );
 
 		while( read32(CARD_CMD) == 0xdeadbeef );
 		write32( CARD_SCMD, read32(CARD_CMD) );
@@ -745,6 +748,7 @@ void CARDUpdateRegisters( void )
 			} break;
 		}
 
-		clear32( HW_GPIO_OUT, 1<<5 );
+		if( ConfigGetConfig(DML_CFG_ACTIVITY_LED) )
+			clear32( HW_GPIO_OUT, 1<<5 );
 	}
 }
