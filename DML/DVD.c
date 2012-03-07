@@ -71,31 +71,36 @@ s32 DVDSelectGame( void )
 	FIL BootInfo;
 
 	char *str = (char *)malloca( 0x400, 32 );
-	sprintf( str, "/games/boot.bin" );
 
-	switch( f_open( &BootInfo, str, FA_READ ) )
+	if( ConfigGetConfig(DML_CFG_GAME_PATH) )
 	{
-		case FR_OK:
+		sprintf( str, "%s", ConfigGetGamePath() );
+
+	} else {
+
+		sprintf( str, "/games/boot.bin" );
+
+		switch( f_open( &BootInfo, str, FA_READ ) )
 		{
-			char *Path = (char*)malloca( BootInfo.fsize, 32 );
+			case FR_OK:
+			{
+				char *Path = (char*)malloca( BootInfo.fsize, 32 );
 
-			f_read( &BootInfo, Path, BootInfo.fsize, &read );
-			f_close( &BootInfo );
+				f_read( &BootInfo, Path, BootInfo.fsize, &read );
+				f_close( &BootInfo );
 			
-			f_unlink(str);          // Delete the boot.bin, so retail discs can be loaded via the disc channel
+				f_unlink(str);          // Delete the boot.bin, so retail discs can be loaded via the disc channel
 
-			if( ConfigGetConfig(DML_CFG_GAME_PATH) )
-				sprintf( str, "%s", ConfigGetGamePath() );
-			else
 				sprintf( str, "/games/%s/game.iso", Path );
 
-			free( Path );
-		} break;
-		default:
-		{
-			dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
-			return -1;
-		} break;
+				free( Path );
+			} break;
+			default:
+			{
+				dbgprintf("DIP:Couldn't open /games/boot.bin!\n");
+				return -1;
+			} break;
+		}
 	}
 
 	s32 fres = f_open( &GameFile, str, FA_READ );

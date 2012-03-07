@@ -50,7 +50,7 @@ void *malloc( u32 size )
 		return NULL;
 	}
 
-	dbgprintf("Using entry:%d to alloc %d bytes...\n", entry, size );
+	//dbgprintf("Using entry:%d to alloc %d bytes...\n", entry, size );
 
 	//Now we search a used entry
 	u32 used_entry = 0xdeadbeef;

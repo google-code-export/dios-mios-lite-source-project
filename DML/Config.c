@@ -17,6 +17,9 @@ void ConfigInit( DML_CFG *Cfg )
 		
 		DMLCfg->Config = 0;
 #ifdef CHEATHOOK
+		DMLCfg->Config |= DML_CFG_CHEATS;
+#endif
+#ifdef DEBUGGER
 		DMLCfg->Config |= DML_CFG_DEBUGGER;
 #endif
 #ifdef DEBUGGERWAIT

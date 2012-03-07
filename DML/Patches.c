@@ -575,10 +575,27 @@ void DoPatchesLoader( char *ptr, u32 size )
 void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 {
 	u32 i=0,j=0,k=0;
-	u32 PatchCount		= 0;
+	u32 PatchCount = 0;
 
 	dbgprintf("DoPatches( 0x%p, %d, 0x%X)\n", ptr, size, SectionOffset );
 
+	//PokemonXD NTSC-U and Pokemon Colosseum NTSC-U
+	if(( read32(0) == 0x47585845 ) || ( read32(0) == 0x47433645 ))
+	{
+		// patch out initial memset(0x1800, 0, 0x1800)
+		write32( 0x5614, 0x60000000 );
+		// patch memset to jump to test function
+		write32(0x00005498, 0x4BFFABF0);
+		// patch in test < 0x3000 function
+		write32(0x00000088, 0x3D008000);
+		write32(0x0000008C, 0x61083000);
+		write32(0x00000090, 0x7C044000);
+		write32(0x00000094, 0x4180542C);
+		write32(0x00000098, 0x90E40004);
+		write32(0x0000009C, 0x48005400);
+		// skips __start init of debugger mem
+		write32(0x00003194, 0x48000028);
+	}
 
 	if( ConfigGetConfig(DML_CFG_NMM) )
 	{
@@ -761,7 +778,6 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 		if( ConfigGetConfig(DML_CFG_CHEATS) )
 		{
-	
 			// OSSleepThread(Pattern 1)
 			if( (PatchCount & 16) == 0 )
 			if( read32((u32)ptr + i + 0 ) == 0x3C808000 &&
@@ -775,8 +791,17 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 					j+=4;
 			
 				dbgprintf("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)ptr + i + j) | 0x80000000 );
+
+				u32 DBGSize;
 	
-				memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) ); 
+				if( ConfigGetConfig( DML_CFG_DEBUGGER ) )
+				{
+					memcpy( (void*)0x1800, kenobigcDBG, sizeof(kenobigcDBG) );
+					DBGSize = sizeof(kenobigcDBG);
+				} else {
+					memcpy( (void*)0x1800, kenobigc, sizeof(kenobigc) );
+					DBGSize = sizeof(kenobigc);
+				}					
 
 				if( ConfigGetConfig(DML_CFG_DEBUGWAIT) )
 					write32( P2C(read32(0x1808)), 1 );
@@ -804,12 +829,12 @@ void DoPatches( char *ptr, u32 size, u32 SectionOffset )
 
 				if( f_open( &CodeFD, path, FA_OPEN_EXISTING|FA_READ ) == FR_OK )
 				{
-					if( CodeFD.fsize >= 0x2F00 - (0x1800+sizeof(kenobigc)-8) )
+					if( CodeFD.fsize >= 0x2F00 - (0x1800+DBGSize-8) )
 					{
 						dbgprintf("Patch:Cheatfile is too large, it must not be large than %d bytes!\n",
-							0x2F00 - (0x1800+sizeof(kenobigc)-8));
+							0x2F00 - (0x1800+DBGSize-8));
 					} else {
-						if( f_read( &CodeFD, (void*)(0x1800+sizeof(kenobigc)-8), CodeFD.fsize, &read ) == FR_OK )
+						if( f_read( &CodeFD, (void*)(0x1800+DBGSize-8), CodeFD.fsize, &read ) == FR_OK )
 						{
 							dbgprintf("Patch:Copied cheat file to memory\n");
 							write32( 0x1804, 1 );
