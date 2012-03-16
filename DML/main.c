@@ -217,30 +217,33 @@ int main( int argc, char *argv[] )
 
 	SRAM_Init();
 	ConfigInit( (DML_CFG*)0x1700 );
-
-	LowReadDiscID((void*)0);
-
-	u32 DVDError = DVDLowGetError();
-	if( DVDError )
+	
+	if( !ConfigGetConfig( DML_CFG_NODISC ) )
 	{
-		dbgprintf("DVD:Error:%08X\n", DVDError );
-	}
-	if ( (DVDError >> 24 ) == 0x01 )
-	{
-		dbgprintf("DIP:No disc in drive, can't continue!\n");
-		Shutdown();
+		LowReadDiscID((void*)0);
 
-	} else if( (DVDError >> 24 ) == 0x02 || (DVDError >> 24 ) == 0x05 )
-	{
-		DVDLowReset();
-		LowReadDiscID(0);
-		DVDEnableAudioStreaming( read32(8) >> 24 );
-
-		DVDError = DVDLowGetError();
-
+		u32 DVDError = DVDLowGetError();
 		if( DVDError )
-			dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
-	} 
+		{
+			dbgprintf("DVD:Error:%08X\n", DVDError );
+		}
+		if ( (DVDError >> 24 ) == 0x01 )
+		{
+			dbgprintf("DIP:No disc in drive, can't continue!\n");
+			Shutdown();
+
+		} else if( (DVDError >> 24 ) == 0x02 || (DVDError >> 24 ) == 0x05 )
+		{
+			DVDLowReset();
+			LowReadDiscID(0);
+			DVDEnableAudioStreaming( read32(8) >> 24 );
+
+			DVDError = DVDLowGetError();
+
+			if( DVDError )
+				dbgprintf("DVD:Error:%08X\n",  DVDLowGetError() );
+		}
+	}
 
 	if( !BootGCDisc )
 	{
