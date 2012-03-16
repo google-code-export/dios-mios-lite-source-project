@@ -62,6 +62,7 @@ enum dmlconfig
 	DML_CFG_CHEAT_PATH	= (1<<6),
 	DML_CFG_ACTIVITY_LED= (1<<7),
 	DML_CFG_PADHOOK		= (1<<8),
+	DML_CFG_NODISC		= (1<<9),
 };
 
 enum dmlvideomode

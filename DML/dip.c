@@ -260,13 +260,10 @@ u32 DIUpdateRegisters( void )
 
 					set32( DI_SSTATUS, 0x3A );
 					
-					if( (read32(DI_SCMD_0) >> 24) == 0xA7 )
-					{
-						write32( 0x0d80000C, (1<<0) | (1<<4) );
-						write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
-						write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
-						set32( 0x0d80000C, (1<<2) );
-					}
+					write32( 0x0d80000C, (1<<0) | (1<<4) );
+					write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+					write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+					set32( 0x0d80000C, (1<<2) );					
 					
 				} break;
 				default:

@@ -37,6 +37,9 @@ void ConfigInit( DML_CFG *Cfg )
 #ifdef PADHOOK
 		DMLCfg->Config |= DML_CFG_PADHOOK;
 #endif
+#ifdef NODISC
+		DMLCfg->Config |= DML_CFG_NODISC;
+#endif
 		DMLCfg->VideoMode	= DML_VID_DML_AUTO;
 		DMLCfg->Version		= CONFIG_VERSION;
 		DMLCfg->Magicbytes	= 0xD1050CF6;

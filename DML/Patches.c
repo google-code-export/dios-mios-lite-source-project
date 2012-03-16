@@ -184,6 +184,20 @@ void DoPatchesIPL( void )
 
 	memcpy( (void*)0x1306864, DVDReadDiscIDAsync, sizeof(DVDReadDiscIDAsync) );	
 	
+	if( ConfigGetConfig( DML_CFG_NODISC ) )
+	{
+		write32( 0x1303E14, 0x3FE0C000 );
+		write32( 0x1303E18, 0x901F2F00 );
+		write32( 0x1303E7C, 0x801F2F34 );
+	
+		write32( 0x1303ECC, 0x3C60C000 );
+		write32( 0x1303ED0, 0x80832F34 );
+
+	//GetCovervalue
+		write32( 0x1304894, 0x3C60C000 );
+		write32( 0x1304898, 0x80032F34 );
+	}
+
 	memcpy( (void*)0x1304320, OSReportDM, sizeof(OSReportDM) );
 
 	write32( 0x1301AE8, 0x60000000 );	// This BS2Report seems to break loading for some reason
