@@ -9,9 +9,9 @@
 //#define DEBUGGER 1
 //#define DEBUGGERWAIT 1
 //#define ACTIVITYLED 1
-#define CARDMODE 1
+//#define CARDMODE 1
 //#define CARDDEBUG 1
-//#define REALNAND 1
+#define REALNAND 1
 //#define SPEEDTEST 1
 #define PADHOOK 1
 //#define NODISC 1

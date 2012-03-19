@@ -259,11 +259,25 @@ u32 DIUpdateRegisters( void )
 						clear32( DI_SCONTROL, 1 );
 
 					set32( DI_SSTATUS, 0x3A );
-					
-					write32( 0x0d80000C, (1<<0) | (1<<4) );
-					write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
-					write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
-					set32( 0x0d80000C, (1<<2) );					
+
+					if( ConfigGetConfig(DML_CFG_NODISC) )
+					{
+						write32( 0x0d80000C, (1<<0) | (1<<4) );
+						write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+						write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+						set32( 0x0d80000C, (1<<2) );
+
+					} else {
+						
+						if( (read32(DI_SCMD_0) >> 24) == 0xA7 )
+						{
+							write32( 0x0d80000C, (1<<0) | (1<<4) );
+							write32( HW_PPCIRQFLAG, read32(HW_PPCIRQFLAG) );
+							write32( HW_ARMIRQFLAG, read32(HW_ARMIRQFLAG) );
+							set32( 0x0d80000C, (1<<2) );		
+						}
+					}
+									
 					
 				} break;
 				default:
