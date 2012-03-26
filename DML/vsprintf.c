@@ -380,23 +380,23 @@ int dbgprintf( const char *fmt, ...)
 		GeckoSendBuffer( buffer );
 	}
 	
-	if (dbgprintf_sd_access)
-	{
-		// Write all debug output to the log file, independent from the usb gecko output
-		// Only fwrite output from games won't be logged to sd card
-		u32 read;
-		u32 fres = f_open( &Log, "/dm.log", FA_READ|FA_WRITE|FA_OPEN_ALWAYS );
-		if( fres != FR_OK )
-		{
-			write32( 0x0D800070, 1 );
-			dbgprintf_sd_access = 0;
-			dbgprintf("f_open():%d\n", fres );
-		}
+	//if (dbgprintf_sd_access)
+	//{
+	//	// Write all debug output to the log file, independent from the usb gecko output
+	//	// Only fwrite output from games won't be logged to sd card
+	//	u32 read;
+	//	u32 fres = f_open( &Log, "/dm.log", FA_READ|FA_WRITE|FA_OPEN_ALWAYS );
+	//	if( fres != FR_OK )
+	//	{
+	//		write32( 0x0D800070, 1 );
+	//		dbgprintf_sd_access = 0;
+	//		dbgprintf("f_open():%d\n", fres );
+	//	}
 
-		f_lseek( &Log, Log.fsize );
-		f_write( &Log, buffer, strlen(buffer), &read );
-		f_close( &Log );
-	}
+	//	f_lseek( &Log, Log.fsize );
+	//	f_write( &Log, buffer, strlen(buffer), &read );
+	//	f_close( &Log );
+	//}
 
 	return 1;
 }

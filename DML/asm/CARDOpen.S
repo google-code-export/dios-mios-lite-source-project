@@ -31,14 +31,14 @@ CARDOpen:
 	stw     %r5,	0x2F68(%r7)	
 	
 #cache workaround for the filename
-	li		%r5,	8
-	mtctr	%r5
-	lis     %r5,	0xC000
+	li		%r3,	8
+	mtctr	%r3
+	lis     %r3,	0xC000
 invalidloop:
 	lwz		%r0,	0(%r4)
-	stw		%r0,	0x17E0(%r5)
+	stw		%r0,	0x17E0(%r3)
 	addi	%r4,	%r4,	4
-	addi	%r5,	%r5,	4
+	addi	%r3,	%r3,	4
 	bdnz	invalidloop
 	
 	li      %r0,	3
@@ -63,6 +63,7 @@ wait_loop:
 NoCard:
 	li		%r3,	-3
 end:
+	mr		%r4,	%r3
 
 	lwz     %r0,	0x14(%sp)
 	addi    %sp,	%sp,	0x10
