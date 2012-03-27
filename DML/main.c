@@ -287,11 +287,11 @@ int main( int argc, char *argv[] )
 	{
 		ahb_flush_from( AHB_STARLET );	//flush to arm
 
-		if( (((read32(0x12FC) >> 16) & 0x254) == 0x254 ) )
+		if( (((read32(0x12FC) >> 16) & 0x1030) == 0x1030 ) )
 		{
 			SysReset();
 		}
-		if( (((read32(0x12FC) >> 16) & 0x154) == 0x154 ) )
+		if( (((read32(0x12FC) >> 16) & 0x230) == 0x230 ) )
 		{
 			SysShutdown();
 		}
