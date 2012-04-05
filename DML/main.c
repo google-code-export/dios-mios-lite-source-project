@@ -291,7 +291,7 @@ int main( int argc, char *argv[] )
 		{
 			SysReset();
 		}
-		if( (((read32(0x12FC) >> 16) & 0x230) == 0x230 ) )
+		if( (((read32(0x12FC) >> 16) & 0x234) == 0x234 ) )
 		{
 			SysShutdown();
 		}
